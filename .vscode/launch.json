@@ -6,6 +6,20 @@
   "configurations": [
     {
       "type": "java",
+      "name": "MyPostgreConnection",
+      "request": "launch",
+      "mainClass": "main.MyPostgreConnection",
+      "projectName": "SMBDD_b86dc073"
+    },
+    {
+      "type": "java",
+      "name": "MySQLConnection",
+      "request": "launch",
+      "mainClass": "main.MySQLConnection",
+      "projectName": "SMBDD_b86dc073"
+    },
+    {
+      "type": "java",
       "name": "MySQLConnection",
       "request": "launch",
       "mainClass": "main.MySQLConnection",

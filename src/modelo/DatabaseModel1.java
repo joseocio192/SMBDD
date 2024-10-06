@@ -26,7 +26,7 @@ public class DatabaseModel1 {
        try {
             conexion = DriverManager.getConnection(conexionUrl);
             if (conexion != null) {
-                System.out.println("Conectado a la base de datos");
+                System.out.println("Conectado a la base de datos SQL Server");
                 return conexion;
             }
         } catch (SQLException e) {

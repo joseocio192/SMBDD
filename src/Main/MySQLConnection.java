@@ -10,11 +10,11 @@ public class MySQLConnection {
 
     public static void main(String[] args) {
         // URL de conexión a la base de datos
-        String url = "jdbc:mysql://localhost:3306/laravel"; // Cambia 'nombreBaseDatos' por tu BD
-        String user = "root";
+        String url = "jdbc:mysql://26.236.255.233:3306/laravel"; // Cambia 'nombreBaseDatos' por tu BD
+        String user = "Jose2";
 
         // Crear conexión
-        try (Connection connection = DriverManager.getConnection(url, user, "")) {
+        try (Connection connection = DriverManager.getConnection(url, user, "OuSi2IaohyRu04Yk")) {
             System.out.println("Conexión exitosa a MySQL");
 
             // Crear una sentencia SQL

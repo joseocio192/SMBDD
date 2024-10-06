@@ -14,7 +14,11 @@ public class ModeloBD {
             case "select":
                 if (!sentencia.toUpperCase().contains("WHERE")) {
                     String result = selectWOWhere(sentencia, DatabaseModel1.conexion);
+                    String result2 = selectWOWhere(sentencia, DatabaseModel2.connection);
+                    String result3 = selectWOWhere(sentencia, DatabaseModel3.conexion);
                     System.out.println(result);
+                    System.out.println(result2);
+                    System.out.println(result3);
                 } else {
                     ResultSet rs1 = DatabaseModel1.conexion.prepareStatement(sentencia).executeQuery();
                     while (rs1.next()) {
@@ -85,7 +89,7 @@ public class ModeloBD {
         //mysql
         
         //postgres
-
+        
         return jsonBuilder.toString();
     }
 }
