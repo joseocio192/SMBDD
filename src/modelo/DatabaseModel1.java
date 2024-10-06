@@ -3,11 +3,11 @@ package modelo;
 import java.net.ConnectException;
 import java.sql.*;
 
-import Main.App;
+import main.App;
 
 public class DatabaseModel1 {
     private String servidor, basededatos, usuario, password;
-    private Connection conexion;
+    public static Connection conexion;
 
     public DatabaseModel1(String servidor, String basededatos, String usuario, String password) {
         this.servidor = servidor;

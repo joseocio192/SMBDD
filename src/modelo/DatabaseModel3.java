@@ -3,7 +3,7 @@ package modelo;
 import java.net.ConnectException;
 import java.sql.*;
 
-import Main.App;
+import main.App;
 
 public class DatabaseModel3 {
     private String servidor, basededatos, usuario, password;

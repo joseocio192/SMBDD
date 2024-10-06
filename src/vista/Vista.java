@@ -28,10 +28,11 @@ public class Vista extends JFrame implements ComponentListener {
 
         menuConexiones = new JMenu("Conexiones");
         mb.add(menuConexiones);
-        itemConn = new JMenuItem[3];
+        itemConn = new JMenuItem[4];
         itemConn[0] = new JMenuItem("Conectar  MySQL");
         itemConn[1] = new JMenuItem("Conectar SQL Server");
         itemConn[2] = new JMenuItem("Conectar MariaDB");
+        itemConn[3] = new JMenuItem("Ver conexiones");
         for (int i = 0; i < itemConn.length; i++) {
             menuConexiones.add(itemConn[i]);
         }
