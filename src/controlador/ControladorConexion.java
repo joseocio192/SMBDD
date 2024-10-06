@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import modelo.DatabaseModel1;
+import modelo.DatabaseModel2;
 import modelo.ModeloConexion;
 import vista.VistaConexion;
 
@@ -29,6 +30,9 @@ public class ControladorConexion implements ActionListener{
             System.out.println("Conectando...");
             DatabaseModel1 db1 = new DatabaseModel1("localhost", "Despacho", "sa", "123456");
             db1.getConexion();
+
+            DatabaseModel2 db2 = new DatabaseModel2("localhost", "Despacho", "sa", "123456");
+            db2.getConexion();
         }
     }
 }

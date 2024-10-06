@@ -55,10 +55,11 @@ public class Controlador implements ActionListener {
         }
         if (e.getSource() == vista.getOpciones()[1]) {
             System.out.println("Consultas");
-            ModeloBD controladorBD = new ModeloBD();
+            ModeloBD modeloBD = new ModeloBD();
             try {
                 System.out.println("debug");
-                controladorBD.consultasql("select * from clientes");
+                modeloBD.consultasql("select * from clientes");
+
             } catch (SQLException e1) {
                 e1.printStackTrace();
                 System.out.println("Error");
