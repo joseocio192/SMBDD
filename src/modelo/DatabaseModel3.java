@@ -7,7 +7,7 @@ import main.App;
 
 public class DatabaseModel3 {
     private String servidor, basededatos, usuario, password;
-    private Connection conexion;
+    public static Connection conexion;
 
     public DatabaseModel3(String servidor, String basededatos, String usuario, String password) {
         this.servidor = servidor;

@@ -1,0 +1,29 @@
+create database Despacho
+go
+use Despacho
+go
+create table clientes(
+idCliente int not null,
+Nombre varchar(50) not null,
+Estado varchar(50) not null,
+Credito Money,
+Deuda Money
+)
+go
+alter table clientes add constraint pk_idCliente  primary key(idCliente);
+go
+
+insert into clientes values
+(4, 'Pablo', 'Baja Californa', 50,10),
+(5,'Lissandra', 'Baja Californa', 50,100),
+(6,'Leblanc', 'Baja Californa', 30,93)
+
+insert into clientes values
+(1, 'Pedro', 'Jalisco', 50,10),
+(2,'Luis', 'Jalisco', 50,100),
+(3,'Jose', 'Jalisco', 30,93)
+
+insert into clientes values
+(7, 'Urgot', 'Chiapas', 50,10),
+(8,'Darius', 'Chiapas', 50,100),
+(9,'Zac', 'Chiapas', 30,93)

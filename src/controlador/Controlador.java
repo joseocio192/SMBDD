@@ -2,10 +2,12 @@ package controlador;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 
 import javax.swing.SwingUtilities;
 import com.formdev.flatlaf.extras.FlatAnimatedLafChange;
 
+import modelo.ModeloBD;
 import modelo.Modelo;
 import vista.Vista;
 import vista.VistaOpciones;
@@ -41,6 +43,10 @@ public class Controlador implements ActionListener {
             vista.setContentPane(vistaConexion);
             vistaConexion.applyComponentOrientation(vista.getComponentOrientation());
             SwingUtilities.updateComponentTreeUI(vista);
+            SwingUtilities.invokeLater(() -> {
+                vista.setContentPane(vistaConexion);
+                vista.repaint();
+            });
             return;
         }
         if (e.getSource() == vista.getOpciones()[0]) {
@@ -49,8 +55,15 @@ public class Controlador implements ActionListener {
         }
         if (e.getSource() == vista.getOpciones()[1]) {
             System.out.println("Consultas");
-            VistaOpciones vistaOpciones = new VistaOpciones();
-            vistaOpciones.setVisible(true);
+            ModeloBD controladorBD = new ModeloBD();
+            try {
+                System.out.println("debug");
+                controladorBD.consultasql("select * from clientes");
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                System.out.println("Error");
+            }
+
             return;
         }
     }
