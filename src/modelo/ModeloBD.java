@@ -13,27 +13,17 @@ public class ModeloBD {
         switch (sentencia.split(" ")[0].toLowerCase()) {
             case "select":
                 if (!sentencia.toUpperCase().contains("WHERE")) {
-                    selectWOWhere(sentencia, DatabaseModel1.conexion);
-                }
-                if (!sentencia.toUpperCase().contains("WHERE")) {
-                    ResultSet rs2 = DatabaseModel1.conexion.prepareStatement(sentencia).executeQuery();
-                    while (rs2.next()) {
-                        for (int i = 1; i <= rs2.getMetaData().getColumnCount(); i++) {
-                            System.out.print(rs2.getString(i) + " ");
+                    String result = selectWOWhere(sentencia, DatabaseModel1.conexion);
+                    System.out.println(result);
+                } else {
+                    ResultSet rs1 = DatabaseModel1.conexion.prepareStatement(sentencia).executeQuery();
+                    while (rs1.next()) {
+                        for (int i = 1; i <= rs1.getMetaData().getColumnCount(); i++) {
+                            System.out.print(rs1.getString(i) + " ");
                         }
                         System.out.println();
                     }
-                    break;
                 }
-
-                String criterio = sentencia.substring(sentencia.toUpperCase().indexOf("WHERE") + 5);
-                System.out.println(criterio);
-                if (!criterio.equalsIgnoreCase("estado")) {
-
-                    break;
-                }
-                // get which database to use
-
                 break;
             case "insert":
                 if (sentencia.toUpperCase().contains("WHERE")) {
@@ -76,18 +66,26 @@ public class ModeloBD {
         }
     }
 
-    public void selectWOWhere(String sentencia, Connection conexion) throws SQLException {
-        // SQL SERVER
+    public String selectWOWhere(String sentencia, Connection conexion) throws SQLException {
+        //sql server
+        StringBuilder jsonBuilder = new StringBuilder();
         ResultSet rs2 = conexion.prepareStatement(sentencia).executeQuery();
         while (rs2.next()) {
+            jsonBuilder.append("{");
             for (int i = 1; i <= rs2.getMetaData().getColumnCount(); i++) {
-                System.out.print(rs2.getString(i) + " ");
+                String columnName = rs2.getMetaData().getColumnName(i);
+                String columnValue = rs2.getString(i);
+                jsonBuilder.append("\"").append(columnName).append("\": \"").append(columnValue).append("\"");
+                if (i < rs2.getMetaData().getColumnCount()) {
+                    jsonBuilder.append(", ");
+                }
             }
-            System.out.println();
+            jsonBuilder.append("}");
         }
-        // MYSQL
+        //mysql
+        
+        //postgres
 
-        // POSTGRESQL
-
+        return jsonBuilder.toString();
     }
 }

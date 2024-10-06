@@ -1,5 +1,5 @@
 package modelo;
-// mariadb
+// postgres
 import java.net.ConnectException;
 import java.sql.*;
 
