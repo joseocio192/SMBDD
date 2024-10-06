@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "MySQLConnection",
+      "request": "launch",
+      "mainClass": "main.MySQLConnection",
+      "projectName": "Sistema-Gestor-de-Base-de-Datos-Distribuidas_1eb95c46"
+    },
+    {
+      "type": "java",
       "name": "App",
       "request": "launch",
       "mainClass": "main.App",
@@ -26,7 +33,10 @@
       "jdkPath": "${env:JAVA_HOME}/bin",
       "cwd": "${fileDirname}",
       "startupClass": "${fileBasenameNoExtension}",
-      "classpath": [".", "${fileDirname}"]
+      "classpath": [
+        ".",
+        "${fileDirname}"
+      ]
     },
     {
       "name": "Java Console App",
@@ -36,7 +46,10 @@
       "jdkPath": "${env:JAVA_HOME}/bin",
       "cwd": "${fileDirname}",
       "startupClass": "${fileBasenameNoExtension}",
-      "classpath": [".", "${fileDirname}"],
+      "classpath": [
+        ".",
+        "${fileDirname}"
+      ],
       "externalConsole": true
     }
   ]
