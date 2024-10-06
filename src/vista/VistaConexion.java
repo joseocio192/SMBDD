@@ -12,7 +12,6 @@ import java.awt.*;
 
 import java.util.logging.Logger;
 
-
 public class VistaConexion extends JPanel implements ComponentListener {
 
     transient Logger logger = Logger.getLogger(VistaConexion.class.getName());
@@ -34,61 +33,62 @@ public class VistaConexion extends JPanel implements ComponentListener {
 
     private JPasswordField txtPassword;
 
-    private JPanel panel;
+    private JPanel panelLogin;
 
     public VistaConexion(Vista vista) {
         this.vista = vista;
+        Notifications.getInstance().setJFrame(vista);
         createInterface();
         setMinimumSize(new Dimension(350, 350));
 
         addComponentListener(this);
-        Notifications.getInstance().setJFrame(vista);
     }
 
     private void createInterface() {
         setLayout(null);
 
-        panel = new JPanel();
+        panelLogin = new JPanel();
 
-        panel.setLayout(new Contenedorlbl_txtLayout());
-        panel.putClientProperty(FlatClientProperties.STYLE, ""
+        panelLogin.setLayout(new Contenedorlbl_txtLayout());
+        panelLogin.putClientProperty(FlatClientProperties.STYLE, ""
                 + "border:20,2,2,2;"
                 + "background:$Menu.background;"
                 + "arc:10");
-        add(panel);
 
         lblLogin = new JLabel("Login");
-        panel.add(lblLogin);
+        lblLogin.setFont(new Font("Roboto", Font.BOLD, 20));
+        panelLogin.add(lblLogin);
 
         lblServidor = new JLabel("Servidor");
-        panel.add(lblServidor);
+        panelLogin.add(lblServidor);
 
         txtServidor = new JTextField("Once");
-        panel.add(txtServidor);
+        panelLogin.add(txtServidor);
 
         lblBasedeDatos = new JLabel("Base de Datos");
-        panel.add(lblBasedeDatos);
+        panelLogin.add(lblBasedeDatos);
 
         txtBasedeDatos = new JTextField("DBTickets");
-        panel.add(txtBasedeDatos);
+        panelLogin.add(txtBasedeDatos);
 
         lblUsuario = new JLabel("Usuario");
-        panel.add(lblUsuario);
+        panelLogin.add(lblUsuario);
 
         txtUsuario = new JTextField("sa");
-        panel.add(txtUsuario);
+        panelLogin.add(txtUsuario);
 
         lblPassword = new JLabel("Contraseña");
-        panel.add(lblPassword);
+        panelLogin.add(lblPassword);
 
         txtPassword = new JPasswordField("123456789");
-        panel.add(txtPassword);
+        panelLogin.add(txtPassword);
 
         btnConectar = new JButton("Conectar");
-        panel.add(btnConectar);
+        panelLogin.add(btnConectar);
 
         btnConectarSuma = new JButton("Suma");
-        panel.add(btnConectarSuma);
+        panelLogin.add(btnConectarSuma);
+        add(panelLogin);
 
         btnConectarBulkCleaning = new JButton("Bulk and Cleaning");
         add(btnConectarBulkCleaning);
@@ -132,10 +132,10 @@ public class VistaConexion extends JPanel implements ComponentListener {
         float reduccion = 450;
         System.out.println("w: " + w + " h: " + h);
 
-        panel.setBounds((short) (w * .1), (short) (h * .1), (short) (w * .8), (short) (h * .6));
+        panelLogin.setBounds((short) (w * .1), (short) (h * .1), (short) (w * .8), (short) (h * .6));
 
-        btnConectarBulkCleaning.setBounds(panel.getX(), panel.getHeight() + (short) (panel.getY() * 1.1),
-                panel.getWidth(), (short) (panel.getHeight() * .1));
+        btnConectarBulkCleaning.setBounds(panelLogin.getX(), panelLogin.getHeight() + (short) (panelLogin.getY() * 1.1),
+                panelLogin.getWidth(), (short) (panelLogin.getHeight() * .1));
     }
 
     @Override
