@@ -10,9 +10,9 @@ import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 
 import java.util.logging.Logger;
 
-import controlador.Controlador;
-import modelo.Modelo;
-import vista.Vista;
+import two_phase_commit.Controlador;
+import two_phase_commit.ModeloBD2PC;
+import two_phase_commit.Vista;
 
 public class App {
     private static final Logger logger = Logger.getLogger(App.class.getName());
@@ -28,7 +28,7 @@ public class App {
         FlatMacDarkLaf.setup();
 
         Vista vista = new Vista();
-        Modelo modelo = new Modelo();
+        ModeloBD2PC modelo = new ModeloBD2PC();
         new Controlador(vista, modelo);
     }
 }

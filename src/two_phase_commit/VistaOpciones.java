@@ -1,4 +1,4 @@
-package vista;
+package two_phase_commit;
 
 import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
@@ -6,9 +6,8 @@ import java.awt.event.ComponentListener;
 
 import javax.swing.JPanel;
 
-public class VistaOpciones  extends JPanel implements ComponentListener{
+public class VistaOpciones extends JPanel implements ComponentListener {
 
-    
     public VistaOpciones() {
         createInterface();
         setMinimumSize(new Dimension(350, 350));
@@ -36,5 +35,5 @@ public class VistaOpciones  extends JPanel implements ComponentListener{
     public void componentHidden(ComponentEvent e) {
 
     }
-    
+
 }
