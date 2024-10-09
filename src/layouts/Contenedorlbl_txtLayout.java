@@ -24,7 +24,7 @@ public class Contenedorlbl_txtLayout implements LayoutManager {
 
         if (contador == 0) {
 
-            int anchoComponente = (int) (miContenedor.getWidth() / 2);
+            int anchoComponente = miContenedor.getWidth() / 2;
             int altoComponente = (int) (miContenedor.getHeight() * 0.15);
 
             miContenedor.getComponent(0).setBounds((int) ((miContenedor.getWidth() - anchoComponente) / 1.5), y,
@@ -38,15 +38,15 @@ public class Contenedorlbl_txtLayout implements LayoutManager {
 
             Component componente = miContenedor.getComponent(i);
 
-            // if (i == nComponentes - 1) {
+            if (i == nComponentes - 1) {
 
-            // int anchoComponente = (int) (miContenedor.getWidth() / 2);
-            // int altoComponente = (int) (miContenedor.getHeight() * 0.12);
+                int anchoComponente = miContenedor.getWidth() / 2;
+                int altoComponente = (int) (miContenedor.getHeight() * 0.135);
 
-            // componente.setBounds(miContenedor.getWidth() / 4, y, anchoComponente,
-            // altoComponente);
-            // break;
-            // }
+                componente.setBounds(miContenedor.getWidth() / 4, y, anchoComponente,
+                        altoComponente);
+                break;
+            }
             int anchoComponente = (int) (miContenedor.getWidth() * 0.4);
             if (contador % 2 == 0) {
                 anchoComponente = (int) (miContenedor.getWidth() * 0.5);

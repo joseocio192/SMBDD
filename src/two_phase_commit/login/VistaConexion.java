@@ -1,4 +1,4 @@
-package vista;
+package two_phase_commit.login;
 
 import javax.swing.*;
 
@@ -11,16 +11,12 @@ import java.awt.event.*;
 import java.awt.*;
 
 import java.util.logging.Logger;
-
+import two_phase_commit.Vista;
 
 public class VistaConexion extends JPanel implements ComponentListener {
 
     transient Logger logger = Logger.getLogger(VistaConexion.class.getName());
-    private Vista vista;
-
     private JButton btnConectar;
-    private JButton btnConectarSuma;
-    private JButton btnConectarBulkCleaning;
 
     private JLabel lblLogin;
     private JLabel lblServidor;
@@ -37,7 +33,6 @@ public class VistaConexion extends JPanel implements ComponentListener {
     private JPanel panel;
 
     public VistaConexion(Vista vista) {
-        this.vista = vista;
         createInterface();
         setMinimumSize(new Dimension(350, 350));
 
@@ -58,18 +53,19 @@ public class VistaConexion extends JPanel implements ComponentListener {
         add(panel);
 
         lblLogin = new JLabel("Login");
+
         panel.add(lblLogin);
 
         lblServidor = new JLabel("Servidor");
         panel.add(lblServidor);
 
-        txtServidor = new JTextField("Once");
+        txtServidor = new JTextField("localhost");
         panel.add(txtServidor);
 
         lblBasedeDatos = new JLabel("Base de Datos");
         panel.add(lblBasedeDatos);
 
-        txtBasedeDatos = new JTextField("DBTickets");
+        txtBasedeDatos = new JTextField("despacho");
         panel.add(txtBasedeDatos);
 
         lblUsuario = new JLabel("Usuario");
@@ -81,31 +77,17 @@ public class VistaConexion extends JPanel implements ComponentListener {
         lblPassword = new JLabel("Contraseña");
         panel.add(lblPassword);
 
-        txtPassword = new JPasswordField("123456789");
+        txtPassword = new JPasswordField("123456");
         panel.add(txtPassword);
 
         btnConectar = new JButton("Conectar");
         panel.add(btnConectar);
-
-        btnConectarSuma = new JButton("Suma");
-        panel.add(btnConectarSuma);
-
-        btnConectarBulkCleaning = new JButton("Bulk and Cleaning");
-        add(btnConectarBulkCleaning);
 
         setVisible(true);
     }
 
     public JButton getBtnConectar() {
         return btnConectar;
-    }
-
-    public JButton getBtnConectarSuma() {
-        return btnConectarSuma;
-    }
-
-    public JButton getBtnConectarBulkCleaning() {
-        return btnConectarBulkCleaning;
     }
 
     public JTextField getTxtServidor() {
@@ -124,18 +106,32 @@ public class VistaConexion extends JPanel implements ComponentListener {
         return txtPassword;
     }
 
+    public JLabel getLblLogin() {
+        return lblLogin;
+    }
+
     @Override
     public void componentResized(ComponentEvent e) {
         short w = (short) getWidth();
         short h = (short) getHeight();
-        String font = "Roboto";
-        float reduccion = 450;
         System.out.println("w: " + w + " h: " + h);
 
         panel.setBounds((short) (w * .1), (short) (h * .1), (short) (w * .8), (short) (h * .6));
 
-        btnConectarBulkCleaning.setBounds(panel.getX(), panel.getHeight() + (short) (panel.getY() * 1.1),
-                panel.getWidth(), (short) (panel.getHeight() * .1));
+        Font fontTitle = new Font("Roboto", Font.BOLD, (short) (14 + getWidth() * .01));
+        lblLogin.setFont(fontTitle);
+        Font fontLbl = new Font("Roboto", Font.BOLD, (short) (10 + getWidth() * .01));
+        lblServidor.setFont(fontLbl);
+        lblBasedeDatos.setFont(fontLbl);
+        lblUsuario.setFont(fontLbl);
+        lblPassword.setFont(fontLbl);
+        btnConectar.setFont(fontLbl);
+
+        Font fontTxt = new Font("Roboto", Font.PLAIN, (short) (10 + getWidth() * .01));
+        txtServidor.setFont(fontTxt);
+        txtBasedeDatos.setFont(fontTxt);
+        txtUsuario.setFont(fontTxt);
+        txtPassword.setFont(fontTxt);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package modelo;
+package errors;
 
 import java.net.NetworkInterface;
 import java.security.SecureRandom;
@@ -7,10 +7,12 @@ import java.util.Enumeration;
 
 /**
  * Distributed Sequence Generator.
- * Inspired by Twitter snowflake: https://github.com/twitter/snowflake/tree/snowflake-2010
+ * Inspired by Twitter snowflake:
+ * https://github.com/twitter/snowflake/tree/snowflake-2010
  *
  * This class should be used as a Singleton.
- * Make sure that you create and reuse a Single instance of Snowflake per node in your distributed system cluster.
+ * Make sure that you create and reuse a Single instance of Snowflake per node
+ * in your distributed system cluster.
  */
 public class Snowflake {
     private static final int UNUSED_BITS = 1; // Sign bit, Unused (always set to 0)
@@ -32,7 +34,7 @@ public class Snowflake {
 
     // Create Snowflake with a nodeId and custom epoch
     public Snowflake(long nodeId, long customEpoch) {
-        if(nodeId < 0 || nodeId > maxNodeId) {
+        if (nodeId < 0 || nodeId > maxNodeId) {
             throw new IllegalArgumentException(String.format("NodeId must be between %d and %d", 0, maxNodeId));
         }
         this.nodeId = nodeId;
@@ -53,13 +55,13 @@ public class Snowflake {
     public synchronized long nextId() {
         long currentTimestamp = timestamp();
 
-        if(currentTimestamp < lastTimestamp) {
+        if (currentTimestamp < lastTimestamp) {
             throw new IllegalStateException("Invalid System Clock!");
         }
 
         if (currentTimestamp == lastTimestamp) {
             sequence = (sequence + 1) & maxSequence;
-            if(sequence == 0) {
+            if (sequence == 0) {
                 // Sequence Exhausted, wait till next millisecond.
                 currentTimestamp = waitNextMillis(currentTimestamp);
             }
@@ -76,7 +78,6 @@ public class Snowflake {
 
         return id;
     }
-
 
     // Get current timestamp in milliseconds, adjust for the custom epoch.
     private long timestamp() {
@@ -100,7 +101,7 @@ public class Snowflake {
                 NetworkInterface networkInterface = networkInterfaces.nextElement();
                 byte[] mac = networkInterface.getHardwareAddress();
                 if (mac != null) {
-                    for(byte macPort: mac) {
+                    for (byte macPort : mac) {
                         sb.append(String.format("%02X", macPort));
                     }
                 }
@@ -121,7 +122,7 @@ public class Snowflake {
         long nodeId = (id & maskNodeId) >> SEQUENCE_BITS;
         long sequence = id & maskSequence;
 
-        return new long[]{timestamp, nodeId, sequence};
+        return new long[] { timestamp, nodeId, sequence };
     }
 
     @Override
