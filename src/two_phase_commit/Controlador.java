@@ -15,12 +15,13 @@ import two_phase_commit.login.VistaConexion;
 import ver_conexiones.ControladorVerConexiones;
 import ver_conexiones.ModeloVerConexiones;
 import ver_conexiones.VistaVerConexiones;
+import two_phase_commit.ControladorVistaOpciones;
 
 public class Controlador implements ActionListener {
     Vista vista;
-    ModeloBD2PC modeloBD;
+    Modelo modeloBD;
 
-    public Controlador(Vista vista, ModeloBD2PC modeloBD) {
+    public Controlador(Vista vista, Modelo modeloBD) {
         this.vista = vista;
         this.modeloBD = modeloBD;
         escucharEventos();
@@ -60,39 +61,24 @@ public class Controlador implements ActionListener {
         }
         // -------------------------------------------
         if (e.getSource() == vista.getOpciones()[0]) { // Transacciones
-            if (modeloBD.getConexion() == null) {
-                ErrorHandler.showMessage("No hay conexión", "Error", 0);
-                return;
-            }
-            SQLparser parser = new SQLparser(modeloBD.getConexion());
-            try {
-                parser.ejecutarTransacion("update clientes set estado = 'Baja California' where estado = 'Baja Californa'");
-            } catch (SQLException e1) {
-                e1.printStackTrace();
-            }
+            vistaBoard(Modelo.TRANSACCIONES);
             return;
         }
         if (e.getSource() == vista.getOpciones()[1]) { // Consultas
-            if (modeloBD.getConexion() == null) {
-                ErrorHandler.showMessage("No hay conexión", "Error", 0);
-                return;
-            }
-            SQLparser parser = new SQLparser(modeloBD.getConexion());
-            List<Map<String, Object>> x = parser.ejecutarSelect("select * from clientes");
-            System.out.println(x.toString());
+            vistaBoard(Modelo.CONSULTAS);
         }
     }
 
-    // public void vistaConexion(int database) {
-    // VistaConexion vistaConexion = new VistaConexion(vista);
-    // new ControladorConexion(vistaConexion, modeloBD, database);
-    // vista.setContentPane(vistaConexion);
-    // SwingUtilities.updateComponentTreeUI(vista);
-    // SwingUtilities.invokeLater(() -> {
-    // vista.setContentPane(vistaConexion);
-    // vista.repaint();
-    // });
-    // }
+    public void vistaBoard(int tipo) {
+        VistaOpciones vistaOpciones = new VistaOpciones();
+        new ControladorVistaOpciones(vistaOpciones, modeloBD, tipo);
+        vista.setContentPane(vistaOpciones);
+        SwingUtilities.updateComponentTreeUI(vista);
+        SwingUtilities.invokeLater(() -> {
+            vista.setContentPane(vistaOpciones);
+            vista.repaint();
+        });
+    }
 
     public void vistaConexiones(Connection conexion) {
         VistaVerConexiones vistaVerConexiones = new VistaVerConexiones(vista);

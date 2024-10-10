@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.mysql.cj.protocol.Resultset;
-
 import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
@@ -184,7 +182,6 @@ public class SQLparser {
                         conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     }
                 }
-
             }
         } catch (Exception e) {
             System.out.println("Error al crear las conexiones alv");

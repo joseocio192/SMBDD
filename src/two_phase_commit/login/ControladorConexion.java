@@ -8,20 +8,20 @@ import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
 import raven.toast.Notifications;
-import two_phase_commit.ModeloBD2PC;
+import two_phase_commit.Modelo;
 import two_phase_commit.Controlador;
 
 public class ControladorConexion implements ActionListener {
 
     VistaConexion vistaConexion;
     Controlador controlador;
-    ModeloBD2PC modeloBD;
+    Modelo modelo;
 
     public ControladorConexion(VistaConexion vistaConexion, Controlador controlador,
-            ModeloBD2PC modeloBD) {
+            Modelo modeloBD) {
         this.vistaConexion = vistaConexion;
         this.controlador = controlador;
-        this.modeloBD = modeloBD;
+        this.modelo = modeloBD;
         escucharEventos();
     }
 
@@ -49,19 +49,19 @@ public class ControladorConexion implements ActionListener {
         if (e.getSource() == vistaConexion.getBtnConectar()) {
             if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("SQLServer")) {
                 DatabaseModel conexion = new DatabaseModelSQLServer(servidor, basededatos, usuario, password);
-                modeloBD.setConexion(conexion.getConexion());
+                modelo.setConexion(conexion.getConexion());
 
-                controlador.vistaConexiones(modeloBD.getConexion());
+                controlador.vistaConexiones(modelo.getConexion());
             } else if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("MySQL")) {
                 DatabaseModel conexion = new DatabaseModelMysql(servidor, basededatos, usuario, password);
-                modeloBD.setConexion(conexion.getConexion());
+                modelo.setConexion(conexion.getConexion());
 
-                controlador.vistaConexiones(modeloBD.getConexion());
+                controlador.vistaConexiones(modelo.getConexion());
             } else if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("Postgres")) {
                 DatabaseModel conexion = new DatabaseModelPostgres(servidor, basededatos, usuario, password);
-                modeloBD.setConexion(conexion.getConexion());
+                modelo.setConexion(conexion.getConexion());
 
-                controlador.vistaConexiones(modeloBD.getConexion());
+                controlador.vistaConexiones(modelo.getConexion());
             } else {
                 Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER,
                         "Gestor de base de datos no válido");
