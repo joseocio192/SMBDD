@@ -15,7 +15,7 @@ public class DatabaseModelMysql extends DatabaseModel {
 
     @Override
     public Connection getConexion() {
-        String url = "jdbc:mysql://" + servidor + ":3306/" + basededatos;
+        String url = "jdbc:mysql://" + servidor + ":3306/" + basededatos + "?connectTimeout=1000";
         try {
             conexion = DriverManager.getConnection(url, usuario, password);
             if (conexion != null) {
