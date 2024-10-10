@@ -58,7 +58,7 @@ public class VistaConexion extends JPanel implements ComponentListener {
         lblGestor = new JLabel("Gestor");
         panel.add(lblGestor);
 
-        txtGestor = new JTextField("");
+        txtGestor = new JTextField("sqlserver");
         panel.add(txtGestor);
 
         lblServidor = new JLabel("Servidor");
@@ -70,7 +70,7 @@ public class VistaConexion extends JPanel implements ComponentListener {
         lblBasedeDatos = new JLabel("Base de Datos");
         panel.add(lblBasedeDatos);
 
-        txtBasedeDatos = new JTextField("despacho");
+        txtBasedeDatos = new JTextField("Fragmentos");
         panel.add(txtBasedeDatos);
 
         lblUsuario = new JLabel("Usuario");

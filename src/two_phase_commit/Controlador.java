@@ -4,6 +4,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
@@ -58,17 +60,27 @@ public class Controlador implements ActionListener {
         }
         // -------------------------------------------
         if (e.getSource() == vista.getOpciones()[0]) { // Transacciones
+            if (modeloBD.getConexion() == null) {
+                ErrorHandler.showMessage("No hay conexión", "Error", 0);
+                return;
+            }
+            SQLparser parser = new SQLparser(modeloBD.getConexion());
+            try {
+                parser.ejecutarTransacion("update clientes set estado = 'Baja California' where estado = 'Baja Californa'");
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
             return;
         }
         if (e.getSource() == vista.getOpciones()[1]) { // Consultas
-            try {
-                modeloBD.ejecutar2PC("select * from clientes");
-                System.out.println(
-                        modeloBD.getResultadosSQLServer().toString() + "\n" + modeloBD.getResultadosMysql().toString());
-            } catch (SQLException e1) {
-                e1.printStackTrace();
-                ErrorHandler.showMessage(e1.getLocalizedMessage(), "Error", 0);
+            if (modeloBD.getConexion() == null) {
+                ErrorHandler.showMessage("No hay conexión", "Error", 0);
+                return;
             }
+            SQLparser parser = new SQLparser(modeloBD.getConexion());
+            List<Map<String, Object>> x = parser.ejecutarSelect("select * from clientes");
+            
+            System.out.println(x.toString());
         }
     }
 
