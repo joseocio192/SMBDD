@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.mysql.cj.protocol.Resultset;
-
 import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
@@ -174,17 +172,16 @@ public class SQLparser {
                         conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_SUR)) {
                         conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
-                    }    
-                }else{
+                    }
+                } else {
                     if (fragmento.equalsIgnoreCase(ZONA_NORTE) && y.equals("norte")) {
                         conexionNorte = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_CENTRO) && y.equals("centro")) {
                         conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_SUR) && y.equals("sur")) {
                         conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
-                    }  
+                    }
                 }
-                  
             }
         } catch (Exception e) {
             System.out.println("Error al crear las conexiones alv");
@@ -336,7 +333,6 @@ public class SQLparser {
         return resultados;
     }
 
-    
     private List<Map<String, Object>> prepararSentenciaNada(String sentencia, Connection ConexionSql,
             List<String> targetFragments) {
         List<Map<String, Object>> resultados = new ArrayList<>();

@@ -66,7 +66,6 @@ public class Controlador implements ActionListener {
         }
         if (e.getSource() == vista.getOpciones()[1]) { // Consultas
             vistaBoard(Modelo.CONSULTAS);
-
         }
     }
 

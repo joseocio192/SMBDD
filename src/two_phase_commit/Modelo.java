@@ -2,6 +2,9 @@ package two_phase_commit;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TransferQueue;
 
 import errors.ErrorHandler;
 
@@ -13,11 +16,12 @@ public class Modelo {
     private Connection conexion;
 
     public void transacciones(int tipo, String query) {
-        if (tipo == TRANSACCIONES) {
-            SQLparser parser = new SQLparser();
-            parser.ejecutarSelect(query);
-        } else if (tipo == CONSULTAS) {
-            SQLparser parser = new SQLparser();
+        if (tipo == CONSULTAS) {
+            SQLparser parser = new SQLparser(conexion);
+            List<Map<String, Object>> resultado = parser.ejecutarSelect(query);
+            System.out.println(resultado.toString());
+        } else if (tipo == TRANSACCIONES) {
+            SQLparser parser = new SQLparser(conexion);
             try {
                 parser.ejecutarTransacion(query);
             } catch (SQLException e) {
