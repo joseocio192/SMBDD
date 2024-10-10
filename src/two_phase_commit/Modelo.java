@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TransferQueue;
 
+import javax.swing.table.DefaultTableModel;
+
 import errors.ErrorHandler;
 
 public class Modelo {
 
     public static final int TRANSACCIONES = 0;
     public static final int CONSULTAS = 1;
+    public List<Map<String, Object>> resultados;
 
     private Connection conexion;
 
@@ -47,4 +50,5 @@ public class Modelo {
     public void cerrarConexion() {
         this.conexion = null;
     }
+
 }
