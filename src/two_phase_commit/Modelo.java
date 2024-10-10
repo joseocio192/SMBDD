@@ -14,24 +14,31 @@ public class Modelo {
 
     public static final int TRANSACCIONES = 0;
     public static final int CONSULTAS = 1;
-    public List<Map<String, Object>> resultados;
+    private List<Map<String, Object>> resultados;
 
     private Connection conexion;
 
     public void transacciones(int tipo, String query) {
         if (tipo == CONSULTAS) {
             SQLparser parser = new SQLparser(conexion);
-            resultados = parser.ejecutarSelect(query);
-            System.out.println(resultados);
+            try {
+                resultados = parser.ejecutarSelect(query);
+            } catch (SQLException e) {
+                ErrorHandler.showMessage("Error en la consulta: " + e.getMessage(), "Error de consulta", 0);
+            }
         } else if (tipo == TRANSACCIONES) {
             SQLparser parser = new SQLparser(conexion);
             try {
-                parser.ejecutarTransacion(query);
+                parser.ejecutarTransaccion(query);
             } catch (SQLException e) {
                 ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de transacción",
                         0);
             }
         }
+    }
+
+    public List<Map<String, Object>> getResultados() {
+        return resultados;
     }
 
     public Connection getConexion() {
