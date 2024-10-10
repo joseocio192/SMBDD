@@ -18,12 +18,17 @@ public class Modelo {
     public void transacciones(int tipo, String query) {
         if (tipo == CONSULTAS) {
             SQLparser parser = new SQLparser(conexion);
-            List<Map<String, Object>> resultado = parser.ejecutarSelect(query);
-            System.out.println(resultado.toString());
+            List<Map<String, Object>> resultado;
+            try {
+                resultado = parser.ejecutarSelect(query);
+                System.out.println(resultado.toString());
+            } catch (SQLException e) {
+                ErrorHandler.showMessage("Error en la consulta: " + e.getMessage(), "Error de consulta", 0);
+            }
         } else if (tipo == TRANSACCIONES) {
             SQLparser parser = new SQLparser(conexion);
             try {
-                parser.ejecutarTransacion(query);
+                parser.ejecutarTransaccion(query);
             } catch (SQLException e) {
                 ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de transacción",
                         0);
