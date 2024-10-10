@@ -174,17 +174,17 @@ public class SQLparser {
                         conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_SUR)) {
                         conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
-                    }    
-                }else{
+                    }
+                } else {
                     if (fragmento.equalsIgnoreCase(ZONA_NORTE) && y.equals("norte")) {
                         conexionNorte = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_CENTRO) && y.equals("centro")) {
                         conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
                     } else if (fragmento.equalsIgnoreCase(ZONA_SUR) && y.equals("sur")) {
                         conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
-                    }  
+                    }
                 }
-                  
+
             }
         } catch (Exception e) {
             System.out.println("Error al crear las conexiones alv");
@@ -219,28 +219,59 @@ public class SQLparser {
 
     private boolean fasePreparacion(String sentencia) {
         List<String> targetFragments = parseQuery(sentencia);
-        try {
-            if (targetFragments.contains(ZONA_NORTE)) {
-                creareConnessioni(false, "norte");
-                conexionNorte.setAutoCommit(false);
-                resultadosNorte = prepararSentenciaNada(sentencia, conexionNorte, targetFragments);
+
+        // Check if the query contains a insert clause
+        Pattern insertPattern = Pattern.compile("(?i)\\bINSERT\\b");
+        Matcher insertMatcher = insertPattern.matcher(sentencia);
+
+        if (insertMatcher.find()) {
+            try {
+                if (targetFragments.contains(ZONA_NORTE)) {
+                    creareConnessioni(false, "norte");
+                    conexionNorte.setAutoCommit(false);
+                    resultadosNorte = prepararSentencia(sentencia, conexionNorte, targetFragments);
+                }
+                if (targetFragments.contains(ZONA_CENTRO)) {
+                    creareConnessioni(false, "centro");
+                    conexionCentro.setAutoCommit(false);
+                    resultadoCentro = prepararSentencia(sentencia, conexionCentro, targetFragments);
+                }
+                if (targetFragments.contains(ZONA_SUR)) {
+                    creareConnessioni(false, "sur");
+                    conexionSur.setAutoCommit(false);
+                    resultadosSur = prepararSentencia(sentencia, conexionSur, targetFragments);
+                }
+                return true;
+            } catch (SQLException e) {
+                ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de conexión",
+                        ErrorHandler.ERROR_MESSAGE);
+                return false;
             }
-            if (targetFragments.contains(ZONA_CENTRO)) {
-                creareConnessioni(false, "centro");
-                conexionCentro.setAutoCommit(false);
-                resultadoCentro = prepararSentenciaNada(sentencia, conexionCentro, targetFragments);
+        } else {
+            try {
+                if (targetFragments.contains(ZONA_NORTE)) {
+                    creareConnessioni(false, "norte");
+                    conexionNorte.setAutoCommit(false);
+                    resultadosNorte = prepararSentenciaNada(sentencia, conexionNorte, targetFragments);
+                }
+                if (targetFragments.contains(ZONA_CENTRO)) {
+                    creareConnessioni(false, "centro");
+                    conexionCentro.setAutoCommit(false);
+                    resultadoCentro = prepararSentenciaNada(sentencia, conexionCentro, targetFragments);
+                }
+                if (targetFragments.contains(ZONA_SUR)) {
+                    creareConnessioni(false, "sur");
+                    conexionSur.setAutoCommit(false);
+                    resultadosSur = prepararSentenciaNada(sentencia, conexionSur, targetFragments);
+                }
+                return true;
+            } catch (SQLException e) {
+                ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de conexión",
+                        ErrorHandler.ERROR_MESSAGE);
+                return false;
             }
-            if (targetFragments.contains(ZONA_SUR)) {
-                creareConnessioni(false, "sur");
-                conexionSur.setAutoCommit(false);
-                resultadosSur = prepararSentenciaNada(sentencia, conexionSur, targetFragments);
-            }
-            return true;
-        } catch (SQLException e) {
-            ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de conexión",
-                    ErrorHandler.ERROR_MESSAGE);
-            return false;
         }
+
     }
 
     private void faseCommit() {
@@ -336,7 +367,6 @@ public class SQLparser {
         return resultados;
     }
 
-    
     private List<Map<String, Object>> prepararSentenciaNada(String sentencia, Connection ConexionSql,
             List<String> targetFragments) {
         List<Map<String, Object>> resultados = new ArrayList<>();

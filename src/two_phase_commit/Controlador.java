@@ -79,7 +79,6 @@ public class Controlador implements ActionListener {
             }
             SQLparser parser = new SQLparser(modeloBD.getConexion());
             List<Map<String, Object>> x = parser.ejecutarSelect("select * from clientes");
-            
             System.out.println(x.toString());
         }
     }
