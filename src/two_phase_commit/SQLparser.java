@@ -18,19 +18,38 @@ import errors.ErrorHandler;
 
 public class SQLparser {
 
-    private enum Zona {
-        NORTE("Baja California"),
-        CENTRO("Jalisco"),
-        SUR("Chiapas");
+    public enum Zona {
+        NORTE(new String[] {
+                "Baja California", "Baja California Sur", "Sonora", "Chihuahua", "Coahuila",
+                "Nuevo León", "Tamaulipas", "Durango", "Sinaloa"
+        }),
+        CENTRO(new String[] {
+                "Aguascalientes", "Zacatecas", "San Luis Potosí", "Guanajuato", "Querétaro",
+                "Jalisco", "Michoacán", "Estado de México", "Hidalgo", "Morelos",
+                "Tlaxcala", "Ciudad de México", "Colima", "Nayarit"
+        }),
+        SUR(new String[] {
+                "Chiapas", "Guerrero", "Oaxaca", "Puebla", "Tabasco", "Veracruz",
+                "Campeche", "Yucatán", "Quintana Roo"
+        });
 
-        private final String nombre;
+        private final String[] estados;
 
-        Zona(String nombre) {
-            this.nombre = nombre;
+        Zona(String[] estados) {
+            this.estados = estados;
         }
 
-        public String getNombre() {
-            return nombre;
+        public String[] getEstados() {
+            return estados;
+        }
+
+        public boolean contieneEstado(String nombreEstado) {
+            for (String estado : estados) {
+                if (estado.equalsIgnoreCase(nombreEstado)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -64,8 +83,12 @@ public class SQLparser {
 
     private void agregarFragmentosPorZona(String query, List<String> targetFragments) {
         for (Zona zona : Zona.values()) {
-            if (query.toLowerCase().contains(zona.getNombre().toLowerCase())) {
-                targetFragments.add(zona.getNombre());
+            for (String estado : zona.getEstados()) {
+                if (query.toLowerCase().contains(estado.toLowerCase())) {
+                    targetFragments.add(zona.name());
+                    System.out.println("Agregando " + zona.name());
+                    break;
+                }
             }
         }
     }
@@ -81,13 +104,14 @@ public class SQLparser {
 
     private void agregarTodasLasZonas(List<String> targetFragments) {
         for (Zona zona : Zona.values()) {
-            targetFragments.add(zona.getNombre());
+            targetFragments.add(zona.name());
         }
     }
 
     public List<Map<String, Object>> ejecutarSelect(String sentencia) throws SQLException {
         List<String> targetFragments = parseQuery(sentencia);
-        crearConexiones(targetFragments);
+        if (!crearConexiones(targetFragments))
+            return new ArrayList<>();
 
         List<Map<String, Object>> resultados = new ArrayList<>();
         for (String fragmento : targetFragments) {
@@ -95,34 +119,58 @@ public class SQLparser {
             if (zona != null) {
                 Connection conexion = conexiones.get(zona);
                 if (conexion != null) {
+                    System.out.println("Ejecutando en " + fragmento);
                     resultados.addAll(prepararSentencia(sentencia, conexion));
+                    if (resultados.isEmpty()) {
+                        System.out.println("No se encontraron resultados para el fragmento " + fragmento);
+                    }
                 }
-            }
+            } else
+                ErrorHandler.showMessage("No se encontró la zona para el fragmento " + fragmento, "Error de fragmento",
+                        ErrorHandler.ERROR_MESSAGE);
         }
         return resultados;
     }
 
-    private void crearConexiones(List<String> targetFragments) throws SQLException {
+    private boolean crearConexiones(List<String> targetFragments) throws SQLException {
         Statement statement = conexionFragmentos.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM fragmentos");
 
         while (resultSet.next()) {
             String fragmento = resultSet.getString("Fragmento");
-            Zona zona = obtenerZonaPorNombre(fragmento);
-            if (zona != null && targetFragments.contains(zona.getNombre())) {
+            Zona zona = obtenerZonaPorEstado(fragmento);
+            if (zona != null && targetFragments.contains(zona.name())) {
                 String servidor = resultSet.getString("IP");
                 String gestor = resultSet.getString("gestor");
                 String basededatos = resultSet.getString("basededatos");
                 String usuario = resultSet.getString("usuario");
                 String password = resultSet.getString("Contraseña");
-                conexiones.put(zona, asignarConexion(servidor, gestor, basededatos, usuario, password));
+                Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
+                if (conexion == null) {
+                    ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
+                            "Error de fragmento",
+                            ErrorHandler.ERROR_MESSAGE);
+                    return false;
+                }
+                conexiones.put(zona, conexion);
             }
         }
+        return true;
+    }
+
+    private Zona obtenerZonaPorEstado(String nombre) {
+        for (Zona zona : Zona.values()) {
+            if (zona.contieneEstado(nombre)) {
+                System.out.println(nombre + " pertenece a la zona " + zona.name());
+                return zona;
+            }
+        }
+        return null;
     }
 
     private Zona obtenerZonaPorNombre(String nombre) {
         for (Zona zona : Zona.values()) {
-            if (zona.getNombre().equalsIgnoreCase(nombre)) {
+            if (zona.name().equalsIgnoreCase(nombre)) {
                 return zona;
             }
         }
@@ -148,22 +196,31 @@ public class SQLparser {
         if (fasePreparacion(sentencia)) {
             faseCommit();
             System.out.println("Transacción completada con éxito");
+            ErrorHandler.showMessage("Transacción completada con éxito", "Transacción completada",
+                    ErrorHandler.INFORMATION_MESSAGE);
         } else {
             faseAbort();
             System.err.println("Transacción abortada. Los cambios han sido revertidos.");
+            ErrorHandler.showMessage("Transacción abortada. Los cambios han sido revertidos.", "Transacción abortada",
+                    ErrorHandler.ERROR_MESSAGE);
+
         }
     }
 
     private boolean fasePreparacion(String sentencia) {
         try {
             List<String> targetFragments = parseQuery(sentencia);
+            if (!crearConexiones(targetFragments))
+                return false;
+
             for (String fragmento : targetFragments) {
                 Zona zona = obtenerZonaPorNombre(fragmento);
                 if (zona != null) {
                     Connection conexion = conexiones.get(zona);
                     if (conexion != null) {
                         conexion.setAutoCommit(false);
-                        prepararSentencia(sentencia, conexion);
+                        if (!prepararSentenciaUpdate(sentencia, conexion))
+                            return false;
                     }
                 }
             }
@@ -203,8 +260,15 @@ public class SQLparser {
                     fila.put(resultSet.getMetaData().getColumnName(i), resultSet.getObject(i));
                 }
                 resultados.add(fila);
+                System.out.println(fila.toString());
             }
         }
         return resultados;
+    }
+
+    private boolean prepararSentenciaUpdate(String sentencia, Connection conexion) throws SQLException {
+        try (Statement statement = conexion.createStatement()) {
+            return statement.executeUpdate(sentencia) > 0;
+        }
     }
 }
