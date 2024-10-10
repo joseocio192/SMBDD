@@ -33,7 +33,6 @@ public class SQLparser {
 
     public SQLparser(Connection connessioneATablaCheHaFrammenti) {
         this.connessioneATablaCheHaFrammenti = connessioneATablaCheHaFrammenti;
-
     }
 
     public List<String> parseQuery(String query) {
@@ -218,10 +217,10 @@ public class SQLparser {
         List<String> targetFragments = parseQuery(sentencia);
 
         // Check if the query contains a insert clause
-        Pattern insertPattern = Pattern.compile("(?i)\\bINSERT\\b");
-        Matcher insertMatcher = insertPattern.matcher(sentencia);
+        Pattern selectPattern = Pattern.compile("(?i)\\bSELECT\\b");
+        Matcher selectMatcher = selectPattern.matcher(sentencia);
 
-        if (insertMatcher.find()) {
+        if (selectMatcher.find()) {
             try {
                 if (targetFragments.contains(ZONA_NORTE)) {
                     creareConnessioni(false, "norte");
