@@ -18,26 +18,26 @@ public class VistaConexion extends JPanel implements ComponentListener {
     transient Logger logger = Logger.getLogger(VistaConexion.class.getName());
     private JButton btnConectar;
 
+    private JLabel lblGestor;
     private JLabel lblLogin;
     private JLabel lblServidor;
     private JLabel lblBasedeDatos;
     private JLabel lblUsuario;
     private JLabel lblPassword;
 
+    private JTextField txtGestor;
     private JTextField txtServidor;
     private JTextField txtBasedeDatos;
     private JTextField txtUsuario;
-
     private JPasswordField txtPassword;
 
     private JPanel panel;
 
-    public VistaConexion(Vista vista) {
+    public VistaConexion() {
         createInterface();
         setMinimumSize(new Dimension(350, 350));
 
         addComponentListener(this);
-        Notifications.getInstance().setJFrame(vista);
     }
 
     private void createInterface() {
@@ -53,8 +53,13 @@ public class VistaConexion extends JPanel implements ComponentListener {
         add(panel);
 
         lblLogin = new JLabel("Login");
-
         panel.add(lblLogin);
+
+        lblGestor = new JLabel("Gestor");
+        panel.add(lblGestor);
+
+        txtGestor = new JTextField("");
+        panel.add(txtGestor);
 
         lblServidor = new JLabel("Servidor");
         panel.add(lblServidor);
@@ -90,6 +95,10 @@ public class VistaConexion extends JPanel implements ComponentListener {
         return btnConectar;
     }
 
+    public JTextField getTxtGestor() {
+        return txtGestor;
+    }
+
     public JTextField getTxtServidor() {
         return txtServidor;
     }
@@ -116,7 +125,7 @@ public class VistaConexion extends JPanel implements ComponentListener {
         short h = (short) getHeight();
         System.out.println("w: " + w + " h: " + h);
 
-        panel.setBounds((short) (w * .1), (short) (h * .1), (short) (w * .8), (short) (h * .6));
+        panel.setBounds((short) (w * .1), (short) (h * .1), (short) (w * .8), (short) (h * .7));
 
         Font fontTitle = new Font("Roboto", Font.BOLD, (short) (14 + getWidth() * .01));
         lblLogin.setFont(fontTitle);

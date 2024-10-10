@@ -17,13 +17,23 @@ public class ModeloBD2PC {
     private Connection conexionSQLServer;
     private Connection conexionPostgres;
 
-    private static final int MYSQL = 0;
-    private static final int POSTGRESQL = 1;
-    private static final int SQLSERVER = 2;
-
     List<Map<String, Object>> resultadosSQLServer; // reiniciarlos a vacio***
     List<Map<String, Object>> resultadosMysql;
     List<Map<String, Object>> resultadosPostgres;
+
+    private Connection conexion;
+
+    public Connection getConexion() {
+        return conexion;
+    }
+
+    public void setConexion(Connection conexion) {
+        this.conexion = conexion;
+    }
+
+    public void cerrarConexion() {
+        this.conexion = null;
+    }
 
     public void ejecutar2PC(String sentencia) throws SQLException {
         if (conexionMysql == null && conexionSQLServer == null && conexionPostgres == null) {
@@ -154,18 +164,6 @@ public class ModeloBD2PC {
                 System.err.println("Error al restaurar auto-commit: " + e.getMessage());
             }
         }
-    }
-
-    public int getMYSQL() {
-        return MYSQL;
-    }
-
-    public int getPOSTGRESQL() {
-        return POSTGRESQL;
-    }
-
-    public int getSQLSERVER() {
-        return SQLSERVER;
     }
 
     public Connection getConexionMysql() {
