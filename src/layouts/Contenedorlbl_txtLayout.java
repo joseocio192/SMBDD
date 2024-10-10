@@ -20,12 +20,12 @@ public class Contenedorlbl_txtLayout implements LayoutManager {
         int nComponentes = miContenedor.getComponentCount();
 
         int x = 20; // Reiniciar x al inicio de la iteración
-        int y = 5; // Reiniciar y al inicio de la iteración
+        int y = 10; // Reiniciar y al inicio de la iteración
 
         if (contador == 0) {
 
             int anchoComponente = miContenedor.getWidth() / 2;
-            int altoComponente = (int) (miContenedor.getHeight() * 0.15);
+            int altoComponente = (int) (miContenedor.getHeight() * .135);
 
             miContenedor.getComponent(0).setBounds((int) ((miContenedor.getWidth() - anchoComponente) / 1.5), y,
                     anchoComponente,
@@ -41,7 +41,7 @@ public class Contenedorlbl_txtLayout implements LayoutManager {
             if (i == nComponentes - 1) {
 
                 int anchoComponente = miContenedor.getWidth() / 2;
-                int altoComponente = (int) (miContenedor.getHeight() * 0.135);
+                int altoComponente = (int) (miContenedor.getHeight() * .1);
 
                 componente.setBounds(miContenedor.getWidth() / 4, y, anchoComponente,
                         altoComponente);
@@ -51,7 +51,7 @@ public class Contenedorlbl_txtLayout implements LayoutManager {
             if (contador % 2 == 0) {
                 anchoComponente = (int) (miContenedor.getWidth() * 0.5);
             }
-            int altoComponente = (int) (miContenedor.getHeight() * 0.12);
+            int altoComponente = (int) ((miContenedor.getHeight() * .1));
 
             componente.setBounds(x, y, anchoComponente, altoComponente);
 

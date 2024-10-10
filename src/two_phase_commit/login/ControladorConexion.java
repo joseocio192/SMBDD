@@ -7,29 +7,22 @@ import base_de_datos.DatabaseModel;
 import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
+import raven.toast.Notifications;
 import two_phase_commit.ModeloBD2PC;
+import two_phase_commit.Controlador;
 
 public class ControladorConexion implements ActionListener {
 
     VistaConexion vistaConexion;
+    Controlador controlador;
     ModeloBD2PC modeloBD;
-    int database;
 
-    public ControladorConexion(VistaConexion vistaConexion, ModeloBD2PC modeloBD, int database) {
+    public ControladorConexion(VistaConexion vistaConexion, Controlador controlador,
+            ModeloBD2PC modeloBD) {
         this.vistaConexion = vistaConexion;
+        this.controlador = controlador;
         this.modeloBD = modeloBD;
-        this.database = database;
-        initLogin();
         escucharEventos();
-    }
-
-    private void initLogin() {
-        if (database == 0)
-            vistaConexion.getLblLogin().setText("Login MySQL");
-        else if (database == 1)
-            vistaConexion.getLblLogin().setText("Login Postgres");
-        else if (database == 2)
-            vistaConexion.getLblLogin().setText("Login SQL Server");
     }
 
     private void escucharEventos() {
@@ -54,16 +47,26 @@ public class ControladorConexion implements ActionListener {
         // }
 
         if (e.getSource() == vistaConexion.getBtnConectar()) {
-            if (database == 0) {
-                DatabaseModel conexion = new DatabaseModelMysql(servidor, basededatos, usuario, password);
-                modeloBD.setConexionMysql(conexion.getConexion());
-            } else if (database == 1) {
-                DatabaseModel conexion = new DatabaseModelPostgres(servidor, basededatos, usuario, password);
-                modeloBD.setConexionPostgres(conexion.getConexion());
-            } else if (database == 2) {
+            if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("SQLServer")) {
                 DatabaseModel conexion = new DatabaseModelSQLServer(servidor, basededatos, usuario, password);
-                modeloBD.setConexionSQLServer(conexion.getConexion());
+                modeloBD.setConexion(conexion.getConexion());
+
+                controlador.vistaConexiones(modeloBD.getConexion());
+            } else if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("MySQL")) {
+                DatabaseModel conexion = new DatabaseModelMysql(servidor, basededatos, usuario, password);
+                modeloBD.setConexion(conexion.getConexion());
+
+                controlador.vistaConexiones(modeloBD.getConexion());
+            } else if (vistaConexion.getTxtGestor().getText().equalsIgnoreCase("Postgres")) {
+                DatabaseModel conexion = new DatabaseModelPostgres(servidor, basededatos, usuario, password);
+                modeloBD.setConexion(conexion.getConexion());
+
+                controlador.vistaConexiones(modeloBD.getConexion());
+            } else {
+                Notifications.getInstance().show(Notifications.Type.ERROR, Notifications.Location.TOP_CENTER,
+                        "Gestor de base de datos no válido");
             }
+
         }
     }
 }

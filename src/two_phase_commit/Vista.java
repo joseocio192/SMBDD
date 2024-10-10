@@ -1,11 +1,16 @@
 package two_phase_commit;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+
+import raven.toast.Notifications;
+import two_phase_commit.login.ControladorConexion;
+import two_phase_commit.login.VistaConexion;
 
 public class Vista extends JFrame {
 
@@ -14,6 +19,7 @@ public class Vista extends JFrame {
 
     public Vista() {
         Interfaz();
+        Notifications.getInstance().setJFrame(this);
     }
 
     public void Interfaz() {
@@ -28,11 +34,9 @@ public class Vista extends JFrame {
 
         JMenu menuConexiones = new JMenu("Conexiones");
         mb.add(menuConexiones);
-        itemConn = new JMenuItem[4];
-        itemConn[0] = new JMenuItem("Conectar  MySQL");
-        itemConn[1] = new JMenuItem("Conectar Postgres");
-        itemConn[2] = new JMenuItem("Conectar SQL Server");
-        itemConn[3] = new JMenuItem("Ver conexiones");
+        itemConn = new JMenuItem[2];
+        itemConn[0] = new JMenuItem("Ver conexiones");
+        itemConn[1] = new JMenuItem("Login");
         for (int i = 0; i < itemConn.length; i++) {
             menuConexiones.add(itemConn[i]);
         }

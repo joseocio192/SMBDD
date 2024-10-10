@@ -2,16 +2,17 @@ package two_phase_commit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.swing.SwingUtilities;
 
 import errors.ErrorHandler;
+import two_phase_commit.login.ControladorConexion;
 import two_phase_commit.login.VistaConexion;
 import ver_conexiones.ControladorVerConexiones;
 import ver_conexiones.ModeloVerConexiones;
 import ver_conexiones.VistaVerConexiones;
-import two_phase_commit.login.ControladorConexion;
 
 public class Controlador implements ActionListener {
     Vista vista;
@@ -21,7 +22,14 @@ public class Controlador implements ActionListener {
         this.vista = vista;
         this.modeloBD = modeloBD;
         escucharEventos();
+        panelLogin();
         vista.setVisible(true);
+    }
+
+    private void panelLogin() {
+        VistaConexion vistaConexion = new VistaConexion();
+        new ControladorConexion(vistaConexion, this, modeloBD);
+        vista.add(vistaConexion);
     }
 
     public void escucharEventos() {
@@ -35,20 +43,17 @@ public class Controlador implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == vista.getItemConn()[0]) { // MySQL
-            vistaConexion(modeloBD.getMYSQL());
+        if (e.getSource() == vista.getItemConn()[0]) { // Ver conexiones
+            if (modeloBD.getConexion() == null) {
+                ErrorHandler.showMessage("No hay conexión", "Error", 0);
+                return;
+            }
+            vistaConexiones(modeloBD.getConexion());
             return;
         }
-        if (e.getSource() == vista.getItemConn()[1]) { // Postgres
-            vistaConexion(modeloBD.getPOSTGRESQL());
-            return;
-        }
-        if (e.getSource() == vista.getItemConn()[2]) { // SQL Server
-            vistaConexion(modeloBD.getSQLSERVER());
-            return;
-        }
-        if (e.getSource() == vista.getItemConn()[3]) { // Ver conexiones
-            vistaConexiones();
+        if (e.getSource() == vista.getItemConn()[1]) { // Login
+            modeloBD.cerrarConexion();
+            vistaLogin();
             return;
         }
         // -------------------------------------------
@@ -60,7 +65,6 @@ public class Controlador implements ActionListener {
                 modeloBD.ejecutar2PC("select * from clientes");
                 System.out.println(
                         modeloBD.getResultadosSQLServer().toString() + "\n" + modeloBD.getResultadosMysql().toString());
-
             } catch (SQLException e1) {
                 e1.printStackTrace();
                 ErrorHandler.showMessage(e1.getLocalizedMessage(), "Error", 0);
@@ -68,26 +72,36 @@ public class Controlador implements ActionListener {
         }
     }
 
-    public void vistaConexion(int database) {
-        VistaConexion vistaConexion = new VistaConexion(vista);
-        new ControladorConexion(vistaConexion, modeloBD, database);
-        vista.setContentPane(vistaConexion);
-        SwingUtilities.updateComponentTreeUI(vista);
-        SwingUtilities.invokeLater(() -> {
-            vista.setContentPane(vistaConexion);
-            vista.repaint();
-        });
-    }
+    // public void vistaConexion(int database) {
+    // VistaConexion vistaConexion = new VistaConexion(vista);
+    // new ControladorConexion(vistaConexion, modeloBD, database);
+    // vista.setContentPane(vistaConexion);
+    // SwingUtilities.updateComponentTreeUI(vista);
+    // SwingUtilities.invokeLater(() -> {
+    // vista.setContentPane(vistaConexion);
+    // vista.repaint();
+    // });
+    // }
 
-    public void vistaConexiones() {
+    public void vistaConexiones(Connection conexion) {
         VistaVerConexiones vistaVerConexiones = new VistaVerConexiones(vista);
-        ModeloVerConexiones modeloVerConexiones = new ModeloVerConexiones(modeloBD.getConexionMysql(),
-                modeloBD.getConexionPostgres(), modeloBD.getConexionSQLServer());
+        ModeloVerConexiones modeloVerConexiones = new ModeloVerConexiones(conexion);
         new ControladorVerConexiones(vistaVerConexiones, modeloVerConexiones);
         vista.setContentPane(vistaVerConexiones);
         SwingUtilities.updateComponentTreeUI(vista);
         SwingUtilities.invokeLater(() -> {
             vista.setContentPane(vistaVerConexiones);
+            vista.repaint();
+        });
+    }
+
+    public void vistaLogin() {
+        VistaConexion vistaConexion = new VistaConexion();
+        new ControladorConexion(vistaConexion, this, modeloBD);
+        vista.setContentPane(vistaConexion);
+        SwingUtilities.updateComponentTreeUI(vista);
+        SwingUtilities.invokeLater(() -> {
+            vista.setContentPane(vistaConexion);
             vista.repaint();
         });
     }
