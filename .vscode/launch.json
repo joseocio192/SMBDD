@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "SQLparser",
+      "request": "launch",
+      "mainClass": "two_phase_commit.SQLparser",
+      "projectName": "SMBDD_b86dc073"
+    },
+    {
+      "type": "java",
       "name": "MyPostgreConnection",
       "request": "launch",
       "mainClass": "main.MyPostgreConnection",

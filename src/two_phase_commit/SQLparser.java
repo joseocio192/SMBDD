@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.mysql.cj.protocol.Resultset;
+
+import base_de_datos.DatabaseModelMysql;
+import base_de_datos.DatabaseModelPostgres;
+import base_de_datos.DatabaseModelSQLServer;
 import errors.ErrorHandler;
 
 public class SQLparser {
@@ -18,13 +24,19 @@ public class SQLparser {
     private static final String ZONA_CENTRO = "Jalisco";
     private static final String ZONA_SUR = "Chiapas";
 
+    private Connection connessioneATablaCheHaFrammenti;
     private Connection conexionNorte;
     private Connection conexionCentro;
     private Connection conexionSur;
 
-    private List<Map<String, Object>> resultadosSQLServer;
-    private List<Map<String, Object>> resultadosMysql;
-    private List<Map<String, Object>> resultadosPostgres;
+    private List<Map<String, Object>> resultadosNorte;
+    private List<Map<String, Object>> resultadoCentro;
+    private List<Map<String, Object>> resultadosSur;
+
+    public SQLparser(Connection connessioneATablaCheHaFrammenti) {
+        this.connessioneATablaCheHaFrammenti = connessioneATablaCheHaFrammenti;
+
+    }
 
     public List<String> parseQuery(String query) {
         List<String> targetFragments = new ArrayList<>();
@@ -86,39 +98,119 @@ public class SQLparser {
 
     public List<Map<String, Object>> ejecutarSelect(String sentencia) {
         List<String> targetFragments = parseQuery(sentencia);
-        if (conexionNorte != null && targetFragments.contains(ZONA_NORTE)) {
-            resultadosSQLServer = prepararSentencia(sentencia, conexionNorte, targetFragments);
+        if (targetFragments.size() == 3) {
+            creareConnessioni(true, null);
+            resultadosNorte = prepararSentencia(sentencia, conexionNorte, targetFragments);
+            resultadoCentro = prepararSentencia(sentencia, conexionCentro, targetFragments);
+            resultadosSur = prepararSentencia(sentencia, conexionSur, targetFragments);
         }
-        if (conexionCentro != null && targetFragments.contains(ZONA_CENTRO)) {
-            resultadosMysql = prepararSentencia(sentencia, conexionCentro, targetFragments);
+
+        if (targetFragments.size() == 2) {
+            if (targetFragments.contains(ZONA_NORTE) && targetFragments.contains(ZONA_CENTRO)) {
+                creareConnessioni(true, "norte");
+                creareConnessioni(true, "centro");
+                resultadosNorte = prepararSentencia(sentencia, conexionNorte, targetFragments);
+                resultadoCentro = prepararSentencia(sentencia, conexionCentro, targetFragments);
+            }
+            if (targetFragments.contains(ZONA_NORTE) && targetFragments.contains(ZONA_SUR)) {
+                creareConnessioni(true, "norte");
+                creareConnessioni(true, "sur");
+                resultadosNorte = prepararSentencia(sentencia, conexionNorte, targetFragments);
+                resultadosSur = prepararSentencia(sentencia, conexionSur, targetFragments);
+            }
+            if (targetFragments.contains(ZONA_CENTRO) && targetFragments.contains(ZONA_SUR)) {
+                creareConnessioni(true, "centro");
+                creareConnessioni(true, "sur");
+                resultadoCentro = prepararSentencia(sentencia, conexionCentro, targetFragments);
+                resultadosSur = prepararSentencia(sentencia, conexionSur, targetFragments);
+            }
         }
-        if (conexionSur != null && targetFragments.contains(ZONA_SUR)) {
-            resultadosPostgres = prepararSentencia(sentencia, conexionSur, targetFragments);
+
+        if (targetFragments.size() == 1) {
+            if (targetFragments.contains(ZONA_NORTE)) {
+                creareConnessioni(false, "norte");
+                resultadosNorte = prepararSentencia(sentencia, conexionNorte, targetFragments);
+            }
+            if (targetFragments.contains(ZONA_CENTRO)) {
+                creareConnessioni(false, "centro");
+                resultadoCentro = prepararSentencia(sentencia, conexionCentro, targetFragments);
+            }
+            if (targetFragments.contains(ZONA_SUR)) {
+                creareConnessioni(false, "sur");
+                resultadosSur = prepararSentencia(sentencia, conexionSur, targetFragments);
+            }
         }
 
         List<Map<String, Object>> resultados = new ArrayList<>();
-        if (resultadosSQLServer != null) {
-            resultados.addAll(resultadosSQLServer);
+        if (resultadosNorte != null) {
+            resultados.addAll(resultadosNorte);
         }
-        if (resultadosMysql != null) {
-            resultados.addAll(resultadosMysql);
+        if (resultadoCentro != null) {
+            resultados.addAll(resultadoCentro);
         }
-        if (resultadosPostgres != null) {
-            resultados.addAll(resultadosPostgres);
+        if (resultadosSur != null) {
+            resultados.addAll(resultadosSur);
         }
         return resultados;
 
     }
 
-    public void ejecutarTransacion(String sentencia) throws SQLException {
-        if (conexionNorte == null && conexionCentro == null && conexionSur == null) {
-            ErrorHandler.showMessage("No hay conexiones activas", "Error de conexión",
-                    ErrorHandler.INFORMATION_MESSAGE);
-            return;
+    private void creareConnessioni(Boolean x, String y) {
+        try {
+            Statement statement = connessioneATablaCheHaFrammenti.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM fragmentos");
+            while (resultSet.next()) {
+                String fragmento = resultSet.getString("Fragmento");
+                String criterioFrag = resultSet.getString("CriterioFrag");
+                String servidor = resultSet.getString("IP");
+                String gestor = resultSet.getString("gestor");
+                String basededatos = resultSet.getString("basededatos");
+                String usuario = resultSet.getString("usuario");
+                String password = resultSet.getString("Contraseña");
+                if (x) {
+                    if (fragmento.equalsIgnoreCase(ZONA_NORTE)) {
+                        conexionNorte = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    } else if (fragmento.equalsIgnoreCase(ZONA_CENTRO)) {
+                        conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    } else if (fragmento.equalsIgnoreCase(ZONA_SUR)) {
+                        conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    }    
+                }else{
+                    if (fragmento.equalsIgnoreCase(ZONA_NORTE) && y.equals("norte")) {
+                        conexionNorte = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    } else if (fragmento.equalsIgnoreCase(ZONA_CENTRO) && y.equals("centro")) {
+                        conexionCentro = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    } else if (fragmento.equalsIgnoreCase(ZONA_SUR) && y.equals("sur")) {
+                        conexionSur = AsignandoConectionYgestor(servidor, gestor, basededatos, usuario, password);
+                    }  
+                }
+                  
+            }
+        } catch (Exception e) {
+            System.out.println("Error al crear las conexiones alv");
         }
+    }
+
+    private Connection AsignandoConectionYgestor(String servidor, String gestor, String basededatos, String usuario,
+            String password) {
+        if (gestor.equalsIgnoreCase("SQLServer")) {
+            return new DatabaseModelSQLServer(servidor, basededatos, usuario, password)
+                    .getConexion();
+        }
+        if (gestor.equalsIgnoreCase("MySQL")) {
+            return new DatabaseModelMysql(servidor, basededatos, usuario, password).getConexion();
+        }
+        if (gestor.equalsIgnoreCase("Postgres")) {
+            return new DatabaseModelPostgres(servidor, basededatos, usuario, password).getConexion();
+        }
+        System.err.println("Error al crear la conexión todo mal");
+        return null;
+    }
+
+    public void ejecutarTransacion(String sentencia) throws SQLException {
         if (fasePreparacion(sentencia)) {
             faseCommit();
-            System.out.println("Transacción completada con éxito en todas las bases de datos.");
+            System.out.println("Transacción completada con éxito");
         } else {
             faseAbort();
             System.err.println("Transacción abortada. Los cambios han sido revertidos.");
@@ -128,17 +220,20 @@ public class SQLparser {
     private boolean fasePreparacion(String sentencia) {
         List<String> targetFragments = parseQuery(sentencia);
         try {
-            if (conexionNorte != null && targetFragments.contains(ZONA_NORTE)) {
+            if (targetFragments.contains(ZONA_NORTE)) {
+                creareConnessioni(false, "norte");
                 conexionNorte.setAutoCommit(false);
-                resultadosSQLServer = prepararSentencia(sentencia, conexionNorte, targetFragments);
+                resultadosNorte = prepararSentenciaNada(sentencia, conexionNorte, targetFragments);
             }
-            if (conexionCentro != null && targetFragments.contains(ZONA_CENTRO)) {
+            if (targetFragments.contains(ZONA_CENTRO)) {
+                creareConnessioni(false, "centro");
                 conexionCentro.setAutoCommit(false);
-                resultadosMysql = prepararSentencia(sentencia, conexionCentro, targetFragments);
+                resultadoCentro = prepararSentenciaNada(sentencia, conexionCentro, targetFragments);
             }
-            if (conexionSur != null && targetFragments.contains(ZONA_SUR)) {
+            if (targetFragments.contains(ZONA_SUR)) {
+                creareConnessioni(false, "sur");
                 conexionSur.setAutoCommit(false);
-                resultadosPostgres = prepararSentencia(sentencia, conexionSur, targetFragments);
+                resultadosSur = prepararSentenciaNada(sentencia, conexionSur, targetFragments);
             }
             return true;
         } catch (SQLException e) {
@@ -229,11 +324,26 @@ public class SQLparser {
             ResultSet resultSet = statement.executeQuery(sentencia);
             while (resultSet.next()) {
                 Map<String, Object> fila = new HashMap<>();
-                for (String fragment : targetFragments) {
-                    fila.put(fragment, resultSet.getObject(fragment));
+                for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                    fila.put(resultSet.getMetaData().getColumnName(i), resultSet.getObject(i));
                 }
                 resultados.add(fila);
             }
+        } catch (SQLException e) {
+            ErrorHandler.showMessage("Error al ejecutar la sentencia: " + e.getMessage(), "Error de conexión",
+                    ErrorHandler.ERROR_MESSAGE);
+        }
+        return resultados;
+    }
+
+    
+    private List<Map<String, Object>> prepararSentenciaNada(String sentencia, Connection ConexionSql,
+            List<String> targetFragments) {
+        List<Map<String, Object>> resultados = new ArrayList<>();
+        try {
+            Statement statement = ConexionSql.createStatement();
+            int resultSet = statement.executeUpdate(sentencia);
+            System.out.println("Filas afectadas: " + resultSet);
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error al ejecutar la sentencia: " + e.getMessage(), "Error de conexión",
                     ErrorHandler.ERROR_MESSAGE);
@@ -263,15 +373,5 @@ public class SQLparser {
 
     public void setConexionSur(Connection conexionSur) {
         this.conexionSur = conexionSur;
-    }
-
-    public static void main(String[] args) {
-        SQLparser parser = new SQLparser();
-        String query = "SELECT Estado FROM clientes WHERE Estado = 'Jalisco'";
-            parser.ejecutarSelect(query);
-        //show results
-        for (Map<String, Object> result : parser.resultadosSQLServer) {
-            System.out.println(result);
-        }
     }
 }

@@ -14,9 +14,9 @@ alter table clientes add constraint pk_idCliente primary key(idCliente);
 go
 --mysql
 insert into clientes values
-(4, 'Pablo', 'Baja Californa', 50,10),
-(5,'Lissandra', 'Baja Californa', 50,100),
-(6,'Leblanc', 'Baja Californa', 30,93)
+(4, 'Pablo', 'Baja California', 50,10),
+(5,'Lissandra', 'Baja California', 50,100),
+(6,'Leblanc', 'Baja California', 30,93)
 --sql server
 insert into clientes values
 (1, 'Pedro', 'Jalisco', 50,10),
