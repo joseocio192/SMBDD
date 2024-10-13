@@ -6,6 +6,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "main2",
+      "request": "launch",
+      "mainClass": "main.main2",
+      "projectName": "SMBDD_b86dc073"
+    },
+    {
+      "type": "java",
       "name": "SQLparser",
       "request": "launch",
       "mainClass": "two_phase_commit.SQLparser",
