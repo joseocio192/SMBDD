@@ -7,6 +7,7 @@ import java.awt.Font;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.fonts.roboto.FlatRobotoFont;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 
 import java.util.logging.Logger;
 
@@ -25,7 +26,7 @@ public class App {
         }
         FlatRobotoFont.install();
         UIManager.put("defaultFont", new Font(FlatRobotoFont.FAMILY, Font.PLAIN, 13));
-        FlatMacDarkLaf.setup();
+        FlatMacLightLaf.setup();
 
         Vista vista = new Vista();
         Modelo modelo = new Modelo();

@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 
 import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
@@ -145,6 +149,7 @@ public class SQLparser {
                 String basededatos = resultSet.getString("basededatos");
                 String usuario = resultSet.getString("usuario");
                 String password = resultSet.getString("Contraseña");
+
                 Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
                 if (conexion == null) {
                     ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
@@ -186,10 +191,22 @@ public class SQLparser {
             String password) {
         switch (gestor.toLowerCase()) {
             case "sqlserver":
+                if (!isDatabaseReachable(servidor, 1433, 2000)) {
+                    System.err.println("No se pudo conectar al servidor SQL Server");
+                    return null;
+                }
                 return new DatabaseModelSQLServer(servidor, basededatos, usuario, password).getConexion();
             case "mysql":
+                if (!isDatabaseReachable(servidor, 3306, 2000)) {
+                    System.err.println("No se pudo conectar al servidor MySQL");
+                    return null;
+                }
                 return new DatabaseModelMysql(servidor, basededatos, usuario, password).getConexion();
             case "postgres":
+                if (!isDatabaseReachable(servidor, 1414, 2000)) {
+                    System.err.println("No se pudo conectar al servidor PostgreSQL");
+                    return null;
+                }
                 return new DatabaseModelPostgres(servidor, basededatos, usuario, password).getConexion();
             default:
                 System.err.println("Error al crear la conexión para el gestor: " + gestor);
@@ -276,4 +293,22 @@ public class SQLparser {
             return statement.executeUpdate(sentencia) > 0;
         }
     }
+
+    public static boolean isDatabaseReachable(String host, int port, int timeout) {
+        Socket socket = new Socket();
+        SocketAddress socketAddress = new InetSocketAddress(host, port);
+
+        try {
+            socket.connect(socketAddress, timeout);
+            return true;
+        } catch (IOException e) {
+            return false;
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+
 }

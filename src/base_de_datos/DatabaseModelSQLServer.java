@@ -15,6 +15,7 @@ public class DatabaseModelSQLServer extends DatabaseModel {
 
     @Override
     public Connection getConexion() {
+        
         String url = "jdbc:sqlserver://" + servidor + ";database=" + basededatos + ";user=" + usuario + ";password="
                 + password + ";trustServerCertificate=true;loginTimeout=5;";
         try {
