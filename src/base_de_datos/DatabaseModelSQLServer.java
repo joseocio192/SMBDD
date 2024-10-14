@@ -21,8 +21,7 @@ public class DatabaseModelSQLServer extends DatabaseModel {
         try {
             conexion = DriverManager.getConnection(url);
             if (conexion != null) {
-                ErrorHandler.showMessage("Conectado a la base de datos SQL Server", "Conexión exitosa",
-                        JOptionPane.INFORMATION_MESSAGE);
+                System.out.println("Conexión a SQL Server exitosa");
             }
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error en la conexión a SQL Server: " + e.getMessage(), "Error de conexión",
