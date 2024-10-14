@@ -19,8 +19,20 @@ import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
 import errors.ErrorHandler;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class SQLparser {
+
+    private static final long TIMEOUT = 60000; // 60 segundos de timeout
+
+    private Semaforo semaforo;
+    private Map<String, AtomicBoolean> fragmentStatus;
+    private AtomicBoolean allPrepared;
 
     public enum Zona {
         NORTE(new String[] {
@@ -63,6 +75,8 @@ public class SQLparser {
     public SQLparser(Connection conexionFragmentos) {
         this.conexionFragmentos = conexionFragmentos;
         this.conexiones = new HashMap<>();
+        this.fragmentStatus = new ConcurrentHashMap<>();
+        this.allPrepared = new AtomicBoolean(false);
     }
 
     public List<String> parseQuery(String query) {
@@ -145,6 +159,7 @@ public class SQLparser {
             Zona zona = obtenerZonaPorEstado(fragmento);
             if (zona != null && targetFragments.contains(zona.name())) {
                 String servidor = resultSet.getString("IP");
+                System.out.println("Servidor: " + servidor);
                 String gestor = resultSet.getString("gestor");
                 String basededatos = resultSet.getString("basededatos");
                 String usuario = resultSet.getString("usuario");
@@ -215,58 +230,141 @@ public class SQLparser {
     }
 
     public void ejecutarTransaccion(String sentencia) throws SQLException {
-        if (fasePreparacion(sentencia)) {
-            faseCommit();
+        List<String> targetFragments = parseQuery(sentencia);
+        if (!crearConexiones(targetFragments)) {
+            return;
+        }
+
+        semaforo = new Semaforo(targetFragments.size());
+        fragmentStatus.clear();
+        for (String fragmento : targetFragments) {
+            fragmentStatus.put(fragmento, new AtomicBoolean(false));
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(targetFragments.size() + 1);
+        List<Future<?>> futures = new ArrayList<>();
+
+        futures.add(executor.submit(this::supervisorThread));
+
+        for (String fragmento : targetFragments) {
+            futures.add(executor.submit(() -> prepararFragmento(sentencia, fragmento)));
+        }
+
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (Exception e) {
+                ErrorHandler.showMessage("Error en la ejecución de la transacción: " + e.getMessage(),
+                        "Error de transacción",
+                        ErrorHandler.ERROR_MESSAGE);
+            }
+        }
+
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        if (allPrepared.get()) {
             System.out.println("Transacción completada con éxito");
             ErrorHandler.showMessage("Transacción completada con éxito", "Transacción completada",
                     ErrorHandler.INFORMATION_MESSAGE);
         } else {
-            faseAbort();
             System.err.println("Transacción abortada. Los cambios han sido revertidos.");
             ErrorHandler.showMessage("Transacción abortada. Los cambios han sido revertidos.", "Transacción abortada",
                     ErrorHandler.ERROR_MESSAGE);
-
         }
     }
 
-    private boolean fasePreparacion(String sentencia) {
-        try {
-            List<String> targetFragments = parseQuery(sentencia);
-            if (!crearConexiones(targetFragments))
-                return false;
+    private void supervisorThread() {
+        long startTime = System.currentTimeMillis();
+        boolean timeout = false;
+        while (!timeout && !allPrepared.get()) {
+            boolean allDone = true;
+            for (AtomicBoolean status : fragmentStatus.values()) {
+                if (!status.get()) {
+                    allDone = false;
+                    break;
+                }
+            }
+            if (allDone) {
+                allPrepared.set(true);
+                commitAll();
+                break;
+            }
+            if (System.currentTimeMillis() - startTime > TIMEOUT) {
+                timeout = true;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
 
-            for (String fragmento : targetFragments) {
-                Zona zona = obtenerZonaPorNombre(fragmento);
-                if (zona != null) {
-                    Connection conexion = conexiones.get(zona);
-                    if (conexion != null) {
-                        conexion.setAutoCommit(false);
-                        if (!prepararSentenciaUpdate(sentencia, conexion))
-                            return false;
+        if (timeout || !allPrepared.get()) {
+            rollbackAll();
+        }
+
+        for (int i = 0; i < fragmentStatus.size(); i++) {
+            semaforo.libera();
+        }
+    }
+
+    private void prepararFragmento(String sentencia, String fragmento) {
+        try {
+            Zona zona = obtenerZonaPorNombre(fragmento);
+            if (zona != null) {
+                Connection conexion = conexiones.get(zona);
+                if (conexion != null) {
+                    conexion.setAutoCommit(false);
+                    if (prepararSentenciaUpdate(sentencia, conexion)) {
+                        fragmentStatus.get(fragmento).set(true);
                     }
                 }
             }
-            return true;
         } catch (SQLException e) {
-            ErrorHandler.showMessage("Error en la fase de preparación: " + e.getMessage(), "Error de conexión",
-                    ErrorHandler.ERROR_MESSAGE);
-            return false;
+            ErrorHandler.showMessage("Error al preparar el fragmento " + fragmento + ": " + e.getMessage(),
+                    "Error de preparación", ErrorHandler.ERROR_MESSAGE);
+        } finally {
+            semaforo.espera();
         }
     }
 
-    private void faseCommit() throws SQLException {
+    private void commitAll() {
         for (Connection conexion : conexiones.values()) {
             if (conexion != null) {
-                conexion.commit();
+                try {
+                    conexion.commit();
+                } catch (SQLException e) {
+                    ErrorHandler.showMessage("Error al hacer commit: " + e.getMessage(), "Error de commit",
+                            ErrorHandler.ERROR_MESSAGE);
+                }
             }
         }
     }
 
-    private void faseAbort() throws SQLException {
+    private void rollbackAll() {
         for (Connection conexion : conexiones.values()) {
             if (conexion != null) {
-                conexion.rollback();
-                conexion.setAutoCommit(true);
+                try {
+                    conexion.rollback();
+                } catch (SQLException e) {
+                    ErrorHandler.showMessage("Error al hacer rollback: " + e.getMessage(), "Error de rollback",
+                            ErrorHandler.ERROR_MESSAGE);
+                } finally {
+                    try {
+                        conexion.setAutoCommit(true);
+                    } catch (SQLException e) {
+                        ErrorHandler.showMessage("Error al restablecer autoCommit: " + e.getMessage(),
+                                "Error de conexión", ErrorHandler.ERROR_MESSAGE);
+                    }
+                }
             }
         }
     }
