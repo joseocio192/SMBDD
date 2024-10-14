@@ -21,14 +21,17 @@ import base_de_datos.DatabaseModelSQLServer;
 import errors.ErrorHandler;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.LinkedHashMap;
 
 public class SQLparser {
 
-    private static final long TIMEOUT = 60000; // 60 segundos de timeout
+    private static final long TIMEOUT = 20000;
 
     private Semaforo semaforo;
     private Map<String, AtomicBoolean> fragmentStatus;
@@ -79,24 +82,43 @@ public class SQLparser {
         this.allPrepared = new AtomicBoolean(false);
     }
 
-    public List<String> parseQuery(String query) {
+    public List<String> parseQuery(String query, boolean isSelect) throws ErrorHandler {
         List<String> targetFragments = new ArrayList<>();
 
-        if (contieneInsert(query)) {
-            agregarFragmentosPorZona(query, targetFragments);
-        } else {
+        if (isSelect) {
+            if (!isValidSelectStatement(query)) {
+                throw new ErrorHandler("Invalid SELECT statement syntax");
+            }
             agregarFragmentosPorCondiciones(query, targetFragments);
+        } else {
+            if (!isValidModifyingStatement(query)) {
+                throw new ErrorHandler("Invalid INSERT, UPDATE, or DELETE statement syntax");
+            }
+            if (query.toLowerCase().startsWith("insert")) {
+                agregarFragmentosPorZona(query, targetFragments);
+            } else {
+                agregarFragmentosPorCondiciones(query, targetFragments);
+            }
         }
-
         if (targetFragments.isEmpty()) {
             agregarTodasLasZonas(targetFragments);
         }
-
         return targetFragments;
     }
 
-    private boolean contieneInsert(String query) {
-        return query.toLowerCase().contains("insert");
+    private boolean isValidSelectStatement(String query) {
+        String regex = "(?i)^\\s*SELECT\\s+.+\\s+FROM\\s+.+(\\s+WHERE\\s+.+)?$";
+        return Pattern.matches(regex, query);
+    }
+
+    private boolean isValidModifyingStatement(String query) {
+        String insertRegex = "(?i)^\\s*INSERT\\s+INTO\\s+.+\\s+VALUES\\s*\\(.+\\)\\s*$";
+        String updateRegex = "(?i)^\\s*UPDATE\\s+.+\\s+SET\\s+.+(\\s+WHERE\\s+.+)?$";
+        String deleteRegex = "(?i)^\\s*DELETE\\s+FROM\\s+.+(\\s+WHERE\\s+.+)?$";
+
+        return Pattern.matches(insertRegex, query) ||
+                Pattern.matches(updateRegex, query) ||
+                Pattern.matches(deleteRegex, query);
     }
 
     private void agregarFragmentosPorZona(String query, List<String> targetFragments) {
@@ -126,8 +148,9 @@ public class SQLparser {
         }
     }
 
-    public List<Map<String, Object>> ejecutarSelect(String sentencia) throws SQLException {
-        List<String> targetFragments = parseQuery(sentencia);
+    public List<Map<String, Object>> ejecutarSelect(String sentencia) throws SQLException, ErrorHandler {
+        List<String> targetFragments = parseQuery(sentencia, true);
+
         if (!crearConexiones(targetFragments))
             return new ArrayList<>();
 
@@ -218,7 +241,7 @@ public class SQLparser {
                 }
                 return new DatabaseModelMysql(servidor, basededatos, usuario, password).getConexion();
             case "postgres":
-                if (!isDatabaseReachable(servidor, 1414, 2000)) {
+                if (!isDatabaseReachable(servidor, 1212, 2000)) {
                     System.err.println("No se pudo conectar al servidor PostgreSQL");
                     return null;
                 }
@@ -229,8 +252,8 @@ public class SQLparser {
         }
     }
 
-    public void ejecutarTransaccion(String sentencia) throws SQLException {
-        List<String> targetFragments = parseQuery(sentencia);
+    public void ejecutarTransaccion(String sentencia) throws SQLException, ErrorHandler {
+        List<String> targetFragments = parseQuery(sentencia, false);
         if (!crearConexiones(targetFragments)) {
             return;
         }
@@ -252,9 +275,12 @@ public class SQLparser {
 
         for (Future<?> future : futures) {
             try {
-                future.get();
+                future.get(10000, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException e) {
+                ErrorHandler.showMessage("Tiempo de espera excedido en la transacción", "Error de tiempo de espera",
+                        ErrorHandler.ERROR_MESSAGE);
             } catch (Exception e) {
-                ErrorHandler.showMessage("Error en la ejecución de la transacción: " + e.getMessage(),
+                ErrorHandler.showMessage("Error en la ejecución de la transacción: " + e.getLocalizedMessage(),
                         "Error de transacción",
                         ErrorHandler.ERROR_MESSAGE);
             }
@@ -375,9 +401,9 @@ public class SQLparser {
                 ResultSet resultSet = statement.executeQuery(sentencia)) {
 
             while (resultSet.next()) {
-                Map<String, Object> fila = new HashMap<>();
+                Map<String, Object> fila = new LinkedHashMap<>();
                 for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                    fila.put(resultSet.getMetaData().getColumnName(i), resultSet.getObject(i));
+                    fila.put(resultSet.getMetaData().getColumnLabel(i), resultSet.getObject(i));
                 }
                 resultados.add(fila);
                 System.out.println(fila.toString());
@@ -388,7 +414,10 @@ public class SQLparser {
 
     private boolean prepararSentenciaUpdate(String sentencia, Connection conexion) throws SQLException {
         try (Statement statement = conexion.createStatement()) {
-            return statement.executeUpdate(sentencia) > 0;
+            statement.executeUpdate(sentencia);
+            return true;
+        } catch (SQLException e) {
+            throw new ErrorHandler(e.getLocalizedMessage());
         }
     }
 
