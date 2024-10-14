@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class SQLparser {
 
@@ -132,58 +133,112 @@ public class SQLparser {
             return new ArrayList<>();
 
         List<Map<String, Object>> resultados = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(targetFragments.size());
+        List<Future<List<Map<String, Object>>>> futures = new ArrayList<>();
+
         for (String fragmento : targetFragments) {
             Zona zona = obtenerZonaPorNombre(fragmento);
             if (zona != null) {
-                Connection conexion = conexiones.get(zona);
-                if (conexion != null) {
-                    System.out.println("Ejecutando en " + fragmento);
-                    resultados.addAll(prepararSentencia(sentencia, conexion));
-                    if (resultados.isEmpty()) {
-                        System.out.println("No se encontraron resultados para el fragmento " + fragmento);
-                    }
+            Connection conexion = conexiones.get(zona);
+            if (conexion != null) {
+                futures.add(executor.submit(() -> {
+                System.out.println("Ejecutando en " + fragmento);
+                List<Map<String, Object>> fragmentResult = prepararSentencia(sentencia, conexion);
+                if (fragmentResult.isEmpty()) {
+                    System.out.println("No se encontraron resultados para el fragmento " + fragmento);
                 }
-            } else
-                ErrorHandler.showMessage("No se encontró la zona para el fragmento " + fragmento, "Error de fragmento",
-                        ErrorHandler.ERROR_MESSAGE);
+                return fragmentResult;
+                }));
+            }
+            } else {
+            ErrorHandler.showMessage("No se encontró la zona para el fragmento " + fragmento, "Error de fragmento",
+                ErrorHandler.ERROR_MESSAGE);
+            }
         }
-        return resultados;
-    }
 
-    private boolean crearConexiones(List<String> targetFragments) throws SQLException {
+        for (Future<List<Map<String, Object>>> future : futures) {
+            try {
+            resultados.addAll(future.get());
+            } catch (Exception e) {
+            ErrorHandler.showMessage("Error al ejecutar la consulta: " + e.getMessage(), "Error de consulta",
+                ErrorHandler.ERROR_MESSAGE);
+            }
+        }
+
+        executor.shutdown();
+        return resultados;
+        }
+
+        private boolean crearConexiones(List<String> targetFragments) throws SQLException {
         Statement statement = conexionFragmentos.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM fragmentos");
+
+        ExecutorService executor = Executors.newFixedThreadPool(targetFragments.size());
+        List<Future<Boolean>> futures = new ArrayList<>();
 
         while (resultSet.next()) {
             String fragmento = resultSet.getString("Fragmento");
             Zona zona = obtenerZonaPorEstado(fragmento);
             if (zona != null && targetFragments.contains(zona.name())) {
-                String servidor = resultSet.getString("IP");
-                System.out.println("Servidor: " + servidor);
-                String gestor = resultSet.getString("gestor");
-                String basededatos = resultSet.getString("basededatos");
-                String usuario = resultSet.getString("usuario");
-                String password = resultSet.getString("Contraseña");
+            String servidor = resultSet.getString("IP");
+            String gestor = resultSet.getString("gestor");
+            String basededatos = resultSet.getString("basededatos");
+            String usuario = resultSet.getString("usuario");
+            String password = resultSet.getString("Contraseña");
 
+            futures.add(executor.submit(() -> {
                 Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
                 if (conexion == null) {
-                    ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
-                            "Error de fragmento",
-                            ErrorHandler.ERROR_MESSAGE);
-                    return false;
+                ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
+                    "Error de fragmento",
+                    ErrorHandler.ERROR_MESSAGE);
+                return false;
                 }
+                synchronized (conexiones) {
                 conexiones.put(zona, conexion);
+                }
+                return true;
+            }));
             }
         }
+
+        boolean allConnectionsSuccessful = true;
+        for (Future<Boolean> future : futures) {
+            try {
+            if (!future.get(3000, TimeUnit.MILLISECONDS)) {
+                allConnectionsSuccessful = false;
+            }
+            } catch(TimeoutException e){
+            ErrorHandler.showMessage("Error en la creación de conexiones: " + "Se acabo el tiempo de espera",
+                "Error de conexión",
+                ErrorHandler.ERROR_MESSAGE);
+            } catch (Exception e) {
+            ErrorHandler.showMessage("Error en la creación de conexiones: " + e.getMessage(),
+                "Error de conexión",
+                ErrorHandler.ERROR_MESSAGE);
+            allConnectionsSuccessful = false;
+            }
+        }
+
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(TIMEOUT, TimeUnit.MILLISECONDS)) {
+            executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+
         if (conexiones.isEmpty()) {
             ErrorHandler.showMessage("No se encontraron fragmentos para las zonas seleccionadas", "Error de fragmento",
-                    ErrorHandler.ERROR_MESSAGE);
+                ErrorHandler.ERROR_MESSAGE);
             return false;
         }
-        return true;
-    }
+        return allConnectionsSuccessful;
+        }
 
-    private Zona obtenerZonaPorEstado(String nombre) {
+        private Zona obtenerZonaPorEstado(String nombre) {
         for (Zona zona : Zona.values()) {
             if (zona.contieneEstado(nombre)) {
                 System.out.println(nombre + " pertenece a la zona " + zona.name());
@@ -218,7 +273,7 @@ public class SQLparser {
                 }
                 return new DatabaseModelMysql(servidor, basededatos, usuario, password).getConexion();
             case "postgres":
-                if (!isDatabaseReachable(servidor, 1414, 2000)) {
+                if (!isDatabaseReachable(servidor, 1212, 2000)) {
                     System.err.println("No se pudo conectar al servidor PostgreSQL");
                     return null;
                 }

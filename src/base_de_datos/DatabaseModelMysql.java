@@ -19,8 +19,7 @@ public class DatabaseModelMysql extends DatabaseModel {
         try {
             conexion = DriverManager.getConnection(url, usuario, password);
             if (conexion != null) {
-                ErrorHandler.showMessage("Conectado a la base de datos MySQL", "Conexión exitosa",
-                        JOptionPane.INFORMATION_MESSAGE);
+                System.out.println("Conexión a MySQL exitosa");
             }
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error en la conexión a MySQL: " + e.getMessage(), "Error de conexión",
