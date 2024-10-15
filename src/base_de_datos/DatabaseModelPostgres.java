@@ -25,8 +25,7 @@ public class DatabaseModelPostgres extends DatabaseModel {
         try {
             conexion = DriverManager.getConnection(url, props);
             if (conexion != null) {
-                ErrorHandler.showMessage("Conectado a la base de datos Postgres", "Conexión exitosa",
-                        JOptionPane.INFORMATION_MESSAGE);
+                System.out.println("Conexión a PostgreSQL exitosa");
             }
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error en la conexión a PostgreSQL: " + e.getMessage(), "Error de conexión",
