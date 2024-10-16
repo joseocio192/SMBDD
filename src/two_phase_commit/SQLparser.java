@@ -139,37 +139,37 @@ public class SQLparser {
         for (String fragmento : targetFragments) {
             Zona zona = obtenerZonaPorNombre(fragmento);
             if (zona != null) {
-            Connection conexion = conexiones.get(zona);
-            if (conexion != null) {
-                futures.add(executor.submit(() -> {
-                System.out.println("Ejecutando en " + fragmento);
-                List<Map<String, Object>> fragmentResult = prepararSentencia(sentencia, conexion);
-                if (fragmentResult.isEmpty()) {
-                    System.out.println("No se encontraron resultados para el fragmento " + fragmento);
+                Connection conexion = conexiones.get(zona);
+                if (conexion != null) {
+                    futures.add(executor.submit(() -> {
+                        System.out.println("Ejecutando en " + fragmento);
+                        List<Map<String, Object>> fragmentResult = prepararSentencia(sentencia, conexion);
+                        if (fragmentResult.isEmpty()) {
+                            System.out.println("No se encontraron resultados para el fragmento " + fragmento);
+                        }
+                        return fragmentResult;
+                    }));
                 }
-                return fragmentResult;
-                }));
-            }
             } else {
-            ErrorHandler.showMessage("No se encontró la zona para el fragmento " + fragmento, "Error de fragmento",
-                ErrorHandler.ERROR_MESSAGE);
+                ErrorHandler.showMessage("No se encontró la zona para el fragmento " + fragmento, "Error de fragmento",
+                        ErrorHandler.ERROR_MESSAGE);
             }
         }
 
         for (Future<List<Map<String, Object>>> future : futures) {
             try {
-            resultados.addAll(future.get());
+                resultados.addAll(future.get());
             } catch (Exception e) {
-            ErrorHandler.showMessage("Error al ejecutar la consulta: " + e.getMessage(), "Error de consulta",
-                ErrorHandler.ERROR_MESSAGE);
+                ErrorHandler.showMessage("Error al ejecutar la consulta: " + e.getMessage(), "Error de consulta",
+                        ErrorHandler.ERROR_MESSAGE);
             }
         }
 
         executor.shutdown();
         return resultados;
-        }
+    }
 
-        private boolean crearConexiones(List<String> targetFragments) throws SQLException {
+    private boolean crearConexiones(List<String> targetFragments) throws SQLException {
         Statement statement = conexionFragmentos.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM fragmentos");
 
@@ -180,65 +180,74 @@ public class SQLparser {
             String fragmento = resultSet.getString("Fragmento");
             Zona zona = obtenerZonaPorEstado(fragmento);
             if (zona != null && targetFragments.contains(zona.name())) {
-            String servidor = resultSet.getString("IP");
-            String gestor = resultSet.getString("gestor");
-            String basededatos = resultSet.getString("basededatos");
-            String usuario = resultSet.getString("usuario");
-            String password = resultSet.getString("Contraseña");
+                String servidor = resultSet.getString("IP");
+                String gestor = resultSet.getString("gestor");
+                String basededatos = resultSet.getString("basededatos");
+                String usuario = resultSet.getString("usuario");
+                String password = resultSet.getString("Contraseña");
 
-            futures.add(executor.submit(() -> {
-                Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
-                if (conexion == null) {
-                ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
-                    "Error de fragmento",
-                    ErrorHandler.ERROR_MESSAGE);
-                return false;
-                }
-                synchronized (conexiones) {
-                conexiones.put(zona, conexion);
-                }
-                return true;
-            }));
+                futures.add(executor.submit(() -> {
+                    Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
+                    if (conexion == null) {
+                        ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
+                                "Error de fragmento",
+                                ErrorHandler.ERROR_MESSAGE);
+                        return false;
+                    }
+                    synchronized (conexiones) {
+                        conexiones.put(zona, conexion);
+                    }
+                    return true;
+                }));
             }
         }
 
         boolean allConnectionsSuccessful = true;
         for (Future<Boolean> future : futures) {
             try {
-            if (!future.get(3000, TimeUnit.MILLISECONDS)) {
-                allConnectionsSuccessful = false;
-            }
-            } catch(TimeoutException e){
-            ErrorHandler.showMessage("Error en la creación de conexiones: " + "Se acabo el tiempo de espera",
-                "Error de conexión",
-                ErrorHandler.ERROR_MESSAGE);
+                if (!future.get(3000, TimeUnit.MILLISECONDS)) {
+                    allConnectionsSuccessful = false;
+                }
+            } catch (TimeoutException e) {
+                ErrorHandler.showMessage("Error en la creación de conexiones: " + "Se acabo el tiempo de espera",
+                        "Error de conexión",
+                        ErrorHandler.ERROR_MESSAGE);
+                        return false;
             } catch (Exception e) {
-            ErrorHandler.showMessage("Error en la creación de conexiones: " + e.getMessage(),
-                "Error de conexión",
-                ErrorHandler.ERROR_MESSAGE);
-            allConnectionsSuccessful = false;
+                ErrorHandler.showMessage("Error en la creación de conexiones: " + e.getMessage(),
+                        "Error de conexión",
+                        ErrorHandler.ERROR_MESSAGE);
+                allConnectionsSuccessful = false;
             }
         }
 
         executor.shutdown();
         try {
-            if (!executor.awaitTermination(TIMEOUT, TimeUnit.MILLISECONDS)) {
-            executor.shutdownNow();
+            if (!executor.awaitTermination(1000, TimeUnit.MILLISECONDS)) {
+                executor.shutdownNow();
             }
         } catch (InterruptedException e) {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
 
-        if (conexiones.isEmpty()) {
-            ErrorHandler.showMessage("No se encontraron fragmentos para las zonas seleccionadas", "Error de fragmento",
-                ErrorHandler.ERROR_MESSAGE);
-            return false;
+        for (Connection conexion : conexiones.values()) {
+            if (conexion != null) {
+                if (!conexion.isValid(2000)) {
+                    ErrorHandler.showMessage("Error en la creación de conexiones: " + "No se pudo validar la conexión",
+                            "Error de conexión",
+                            ErrorHandler.ERROR_MESSAGE);
+                    allConnectionsSuccessful = false;
+                    break;
+                }
+            }else{
+                 return false;
+            }
         }
         return allConnectionsSuccessful;
-        }
+    }
 
-        private Zona obtenerZonaPorEstado(String nombre) {
+    private Zona obtenerZonaPorEstado(String nombre) {
         for (Zona zona : Zona.values()) {
             if (zona.contieneEstado(nombre)) {
                 System.out.println(nombre + " pertenece a la zona " + zona.name());
@@ -284,7 +293,7 @@ public class SQLparser {
         }
     }
 
-    public void ejecutarTransaccion(String sentencia) throws SQLException {
+    public void ejecutarTransaccion(String sentencia) throws SQLException, ErrorHandler {
         List<String> targetFragments = parseQuery(sentencia);
         if (!crearConexiones(targetFragments)) {
             return;
@@ -307,11 +316,16 @@ public class SQLparser {
 
         for (Future<?> future : futures) {
             try {
-                future.get();
+                future.get(5000, TimeUnit.MILLISECONDS);
+            }   catch (TimeoutException e) {
+                ErrorHandler.showMessage("Error en la ejecución de la transacción: " + "Se acabo el tiempo de espera",
+                        "Error de transacción",
+                        ErrorHandler.ERROR_MESSAGE);
             } catch (Exception e) {
                 ErrorHandler.showMessage("Error en la ejecución de la transacción: " + e.getMessage(),
                         "Error de transacción",
                         ErrorHandler.ERROR_MESSAGE);
+                break;
             }
         }
 
@@ -384,8 +398,7 @@ public class SQLparser {
                 }
             }
         } catch (SQLException e) {
-            ErrorHandler.showMessage("Error al preparar el fragmento " + fragmento + ": " + e.getMessage(),
-                    "Error de preparación", ErrorHandler.ERROR_MESSAGE);
+            throw new ErrorHandler(e.getLocalizedMessage());
         } finally {
             semaforo.espera();
         }
