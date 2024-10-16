@@ -18,21 +18,23 @@ public class Modelo {
 
     private Connection conexion;
 
-    public void transacciones(int tipo, String query) {
+    public void processTransactions(int tipo, String query) {
+        resultados = null;
         if (tipo == CONSULTAS) {
             SQLparser parser = new SQLparser(conexion);
             try {
                 resultados = parser.ejecutarSelect(query);
-            } catch (SQLException e) {
-                ErrorHandler.showMessage("Error en la consulta: " + e.getMessage(), "Error de consulta", 0);
+            } catch (SQLException | ErrorHandler e) {
+                ErrorHandler.showMessage("Error en la consulta: " + e.getMessage(), "Error de consulta",
+                        ErrorHandler.ERROR_MESSAGE);
             }
         } else if (tipo == TRANSACCIONES) {
             SQLparser parser = new SQLparser(conexion);
             try {
                 parser.ejecutarTransaccion(query);
-            } catch (SQLException e) {
+            } catch (SQLException | ErrorHandler e) {
                 ErrorHandler.showMessage("Error en la transacción: " + e.getMessage(), "Error de transacción",
-                        0);
+                        ErrorHandler.ERROR_MESSAGE);
             }
         }
     }
