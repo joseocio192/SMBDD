@@ -162,6 +162,23 @@ public class VistaVerConexiones extends JPanel implements ComponentListener {
         return null;
     }
 
+    public Fragmento getFragmentoAtSelectedRow() {
+        int selectedRow = tablaConexiones.getSelectedRow();
+        if (selectedRow != -1) {
+            String fragmento = (String) modeloTabla.getValueAt(selectedRow, 0);
+            String baseDeDatos = (String) modeloTabla.getValueAt(selectedRow, 1);
+            String criterio = (String) modeloTabla.getValueAt(selectedRow, 2);
+            String atributos = (String) modeloTabla.getValueAt(selectedRow, 3);
+            String gestor = (String) modeloTabla.getValueAt(selectedRow, 4);
+            String servidor = (String) modeloTabla.getValueAt(selectedRow, 5);
+            String usuario = (String) modeloTabla.getValueAt(selectedRow, 6);
+            String contrasena = (String) modeloTabla.getValueAt(selectedRow, 7);
+
+            return new Fragmento(fragmento, baseDeDatos, criterio, atributos, gestor, servidor, usuario, contrasena);
+        }
+        return null;
+    }
+
     public void enableTableEditing(boolean enable) {
         tablaConexiones.setEnabled(enable);
         if (enable) {

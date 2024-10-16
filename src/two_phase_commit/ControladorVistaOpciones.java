@@ -31,7 +31,7 @@ public class ControladorVistaOpciones implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == vistaOpciones.getBtnExcetute()) {
-            modelo.transacciones(tipo, vistaOpciones.getQuery());
+            modelo.processTransactions(tipo, vistaOpciones.getQuery());
             vistaOpciones.llenarTabla(modelo.getResultados());
         }
     }

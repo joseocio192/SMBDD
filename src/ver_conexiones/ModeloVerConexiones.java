@@ -19,23 +19,64 @@ public class ModeloVerConexiones {
         this.conexion = conexion;
     }
 
-    public boolean safeFragment(List<Fragmento> fragmentos) {
-        String query = "INSERT INTO fragmentos VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean addFragment(List<Fragmento> fragmentos) {
+        try {
+            List<Fragmento> fragmentosT = getFragmentos();
+            for (Fragmento fragmento : fragmentos) {
+                if (fragmentos.get(0).getFragmento().equals(fragmentosT.get(0).getFragmento())) {
+                    return editFragment(fragmento);
+                } else {
+                    return safeFragment(fragmento);
+                }
+            }
+        } catch (SQLException e) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, e.getMessage());
+        }
+        return false;
+    }
+
+    public boolean safeFragment(Fragmento fragmento) {
+        if (fragmento == null) {
+            return false;
+        }
+        String query = "INSERT INTO " + FRAGMENTOS + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = conexion.prepareStatement(query)) {
-            for (Fragmento fragmento : fragmentos) {
-                ps.setString(1, fragmento.getFragmento());
-                ps.setString(2, fragmento.getBaseDeDatos());
-                ps.setString(3, fragmento.getCriterio());
-                ps.setString(4, fragmento.getAtributos());
-                ps.setString(5, fragmento.getGestor());
-                ps.setString(6, fragmento.getServidor());
-                ps.setString(7, fragmento.getUsuario());
-                ps.setString(8, fragmento.getContrasena());
+            ps.setString(1, fragmento.getFragmento());
+            ps.setString(2, fragmento.getBaseDeDatos());
+            ps.setString(3, fragmento.getCriterio());
+            ps.setString(4, fragmento.getAtributos());
+            ps.setString(5, fragmento.getGestor());
+            ps.setString(6, fragmento.getServidor());
+            ps.setString(7, fragmento.getUsuario());
+            ps.setString(8, fragmento.getContrasena());
 
-                ps.addBatch();
-            }
-            ps.executeBatch();
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            Notifications.getInstance().show(Notifications.Type.ERROR, e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean editFragment(Fragmento fragmento) {
+        if (fragmento == null) {
+            return false;
+        }
+        String query = "UPDATE " + FRAGMENTOS + " SET base_de_datos = ?, criterio = ?, atributos = ?, gestor = ?, "
+                + "servidor = ?, usuario = ?, contrasena = ? WHERE fragmento = ?";
+
+        try (PreparedStatement ps = conexion.prepareStatement(query)) {
+            ps.setString(1, fragmento.getBaseDeDatos());
+            ps.setString(2, fragmento.getCriterio());
+            ps.setString(3, fragmento.getAtributos());
+            ps.setString(4, fragmento.getGestor());
+            ps.setString(5, fragmento.getServidor());
+            ps.setString(6, fragmento.getUsuario());
+            ps.setString(7, fragmento.getContrasena());
+            ps.setString(8, fragmento.getFragmento());
+
+            ps.executeUpdate();
             return true;
         } catch (SQLException e) {
             Notifications.getInstance().show(Notifications.Type.ERROR, e.getMessage());

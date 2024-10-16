@@ -18,7 +18,8 @@ public class Modelo {
 
     private Connection conexion;
 
-    public void transacciones(int tipo, String query) {
+    public void processTransactions(int tipo, String query) {
+        resultados = null;
         if (tipo == CONSULTAS) {
             SQLparser parser = new SQLparser(conexion);
             try {

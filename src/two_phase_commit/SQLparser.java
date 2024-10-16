@@ -14,21 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.postgresql.core.Notification;
-
-import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
-
-import base_de_datos.DatabaseModelMysql;
-import base_de_datos.DatabaseModelPostgres;
-import base_de_datos.DatabaseModelSQLServer;
 import errors.ErrorHandler;
 import raven.toast.Notifications;
 
@@ -41,24 +28,22 @@ public class SQLparser {
     private AtomicBoolean allPrepared;
 
     private ConnectionManager connectionManager;
-    private Connection conexionFragmentos;
     private QueryParser parser;
 
     private Map<Zona, Connection> conexiones;
 
     public SQLparser(Connection conexionFragmentos) {
-        this.conexionFragmentos = conexionFragmentos;
         this.conexiones = new HashMap<>();
         this.fragmentStatus = new ConcurrentHashMap<>();
         this.allPrepared = new AtomicBoolean(false);
-        this.connectionManager = new ConnectionManager(conexionFragmentos);
+        this.connectionManager = new ConnectionManager(conexionFragmentos, conexiones);
         this.parser = new QueryParser(connectionManager);
     }
 
     public List<Map<String, Object>> ejecutarSelect(String sentencia) throws SQLException, ErrorHandler {
         List<String> targetFragments = parser.parseQuery(sentencia, true);
 
-        if (!crearConexiones(targetFragments))
+        if (!connectionManager.crearConexiones(targetFragments))
             return new ArrayList<>();
 
         List<Map<String, Object>> resultados = new ArrayList<>();
@@ -80,49 +65,6 @@ public class SQLparser {
         return resultados;
     }
 
-    private boolean crearConexiones(List<String> targetFragments) throws SQLException {
-        Statement statement = conexionFragmentos.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM fragmentos");
-
-        while (resultSet.next()) {
-            String fragmento = resultSet.getString("Fragmento");
-            Zona zona = obtenerZonaPorEstado(fragmento);
-            if (zona != null && targetFragments.contains(zona.name())) {
-                String servidor = resultSet.getString("IP");
-                System.out.println("Servidor: " + servidor);
-                String gestor = resultSet.getString("gestor");
-                String basededatos = resultSet.getString("basededatos");
-                String usuario = resultSet.getString("usuario");
-                String password = resultSet.getString("Contraseña");
-
-                Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
-                if (conexion == null) {
-                    ErrorHandler.showMessage("Error al crear la conexión para el fragmento " + fragmento,
-                            "Error de fragmento",
-                            ErrorHandler.ERROR_MESSAGE);
-                    return false;
-                }
-                conexiones.put(zona, conexion);
-            }
-        }
-        if (conexiones.isEmpty()) {
-            ErrorHandler.showMessage("No se encontraron fragmentos para las zonas seleccionadas", "Error de fragmento",
-                    ErrorHandler.ERROR_MESSAGE);
-            return false;
-        }
-        return true;
-    }
-
-    private Zona obtenerZonaPorEstado(String nombre) {
-        for (Zona zona : Zona.values()) {
-            if (zona.contieneEstado(nombre)) {
-                System.out.println(nombre + " pertenece a la zona " + zona.name());
-                return zona;
-            }
-        }
-        return null;
-    }
-
     private Zona obtenerZonaPorNombre(String nombre) {
         for (Zona zona : Zona.values()) {
             if (zona.name().equalsIgnoreCase(nombre)) {
@@ -132,36 +74,9 @@ public class SQLparser {
         return null;
     }
 
-    private Connection asignarConexion(String servidor, String gestor, String basededatos, String usuario,
-            String password) {
-        switch (gestor.toLowerCase()) {
-            case "sqlserver":
-                if (!isDatabaseReachable(servidor, 1433, 2000)) {
-                    System.err.println("No se pudo conectar al servidor SQL Server");
-                    return null;
-                }
-                return new DatabaseModelSQLServer(servidor, basededatos, usuario, password).getConexion();
-            case "mysql":
-                if (!isDatabaseReachable(servidor, 3306, 2000)) {
-                    System.err.println("No se pudo conectar al servidor MySQL");
-                    return null;
-                }
-                return new DatabaseModelMysql(servidor, basededatos, usuario, password).getConexion();
-            case "postgres":
-                if (!isDatabaseReachable(servidor, 1212, 2000)) {
-                    System.err.println("No se pudo conectar al servidor PostgreSQL");
-                    return null;
-                }
-                return new DatabaseModelPostgres(servidor, basededatos, usuario, password).getConexion();
-            default:
-                System.err.println("Error al crear la conexión para el gestor: " + gestor);
-                return null;
-        }
-    }
-
     public void ejecutarTransaccion(String sentencia) throws SQLException {
         List<String> targetFragments = parser.parseQuery(sentencia, false);
-        if (!crearConexiones(targetFragments)) {
+        if (!connectionManager.crearConexiones(targetFragments)) {
             return;
         }
 
@@ -318,22 +233,4 @@ public class SQLparser {
         statement.executeUpdate(sentencia);
         return true;
     }
-
-    public static boolean isDatabaseReachable(String host, int port, int timeout) {
-        Socket socket = new Socket();
-        SocketAddress socketAddress = new InetSocketAddress(host, port);
-
-        try {
-            socket.connect(socketAddress, timeout);
-            return true;
-        } catch (IOException e) {
-            return false;
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-            }
-        }
-    }
-
 }

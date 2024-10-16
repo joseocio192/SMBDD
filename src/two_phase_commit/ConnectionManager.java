@@ -22,9 +22,9 @@ public class ConnectionManager {
     private Map<Zona, Connection> conexiones;
     private static final int TIMEOUT = 5000;
 
-    public ConnectionManager(Connection conexionFragmentos) {
+    public ConnectionManager(Connection conexionFragmentos, Map<Zona, Connection> conexiones) {
         this.conexionFragmentos = conexionFragmentos;
-        this.conexiones = new HashMap<>();
+        this.conexiones = conexiones;
     }
 
     public boolean crearConexiones(List<String> targetFragments) throws SQLException {
