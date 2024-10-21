@@ -21,7 +21,7 @@ public class Modelo {
     public void processTransactions(int tipo, String query) {
         resultados = null;
         if (tipo == CONSULTAS) {
-            SQLparser parser = new SQLparser(conexion);
+            QueryExecutor parser = new QueryExecutor(conexion);
             try {
                 resultados = parser.ejecutarSelect(query);
             } catch (SQLException | ErrorHandler e) {
@@ -29,7 +29,7 @@ public class Modelo {
                         ErrorHandler.ERROR_MESSAGE);
             }
         } else if (tipo == TRANSACCIONES) {
-            SQLparser parser = new SQLparser(conexion);
+            QueryExecutor parser = new QueryExecutor(conexion);
             try {
                 parser.ejecutarTransaccion(query);
             } catch (SQLException | ErrorHandler e) {

@@ -18,10 +18,11 @@ public class DatabaseModelMysql extends DatabaseModel {
         String url = "jdbc:mysql://" + servidor + ":3306/" + basededatos + "?connectTimeout=1000";
         try {
             conexion = DriverManager.getConnection(url, usuario, password);
-            if (conexion != null) {
-                ErrorHandler.showMessage("Conectado a la base de datos MySQL", "Conexión exitosa",
-                        JOptionPane.INFORMATION_MESSAGE);
-            }
+            // if (conexion != null) {
+            // ErrorHandler.showMessage("Conectado a la base de datos MySQL", "Conexión
+            // exitosa",
+            // JOptionPane.INFORMATION_MESSAGE);
+            // }
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error en la conexión a MySQL: " + e.getMessage(), "Error de conexión",
                     JOptionPane.ERROR_MESSAGE);

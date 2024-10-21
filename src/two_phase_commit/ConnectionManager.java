@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.swing.SwingUtilities;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -16,6 +19,7 @@ import java.net.SocketAddress;
 import base_de_datos.DatabaseModelMysql;
 import base_de_datos.DatabaseModelPostgres;
 import base_de_datos.DatabaseModelSQLServer;
+import errors.ErrorHandler;
 
 public class ConnectionManager {
     private Connection conexionFragmentos;
@@ -45,7 +49,8 @@ public class ConnectionManager {
 
                 Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
                 if (conexion == null) {
-                    System.err.println("Error al crear la conexión para el fragmento " + fragmento);
+                    ErrorHandler.showMessage("No se pudo establecer la conexión con el servidor " + servidor,
+                            "Error de conexión", ErrorHandler.ERROR_MESSAGE);
                     return false;
                 }
                 conexiones.put(zona, conexion);
@@ -57,6 +62,37 @@ public class ConnectionManager {
             return false;
         }
         return true;
+    }
+
+    public boolean crearConexion(String fragmento) throws SQLException {
+        Statement statement = conexionFragmentos.createStatement();
+
+        ResultSet resultSet = statement
+                .executeQuery("SELECT Fragmento, IP, gestor, basededatos, usuario, Contraseña FROM fragmentos");
+
+        while (resultSet.next()) {
+            String fragmentoBD = resultSet.getString("Fragmento");
+            Zona zona = obtenerZonaPorEstado(fragmentoBD);
+            if (zona.toString().equals(fragmento)) {
+                String servidor = resultSet.getString("IP");
+                String gestor = resultSet.getString("gestor");
+                String basededatos = resultSet.getString("basededatos");
+                String usuario = resultSet.getString("usuario");
+                String password = resultSet.getString("Contraseña");
+
+                Connection conexion = asignarConexion(servidor, gestor, basededatos, usuario, password);
+                if (conexion == null) {
+                    SwingUtilities.invokeLater(() -> ErrorHandler.showMessage(
+                            "No se pudo establecer la conexión con el servidor " + servidor,
+                            "Error de conexión", ErrorHandler.ERROR_MESSAGE));
+                    return false;
+                }
+                conexiones.put(Zona.valueOf(fragmento.toUpperCase()), conexion);
+                return true;
+            }
+        }
+        System.err.println("No se encontró el fragmento " + fragmento);
+        return false;
     }
 
     public Connection getConnection(Zona zona) {
