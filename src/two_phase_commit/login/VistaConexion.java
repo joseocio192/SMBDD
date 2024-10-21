@@ -130,6 +130,7 @@ public class VistaConexion extends JPanel implements ComponentListener {
         Font fontTitle = new Font("Roboto", Font.BOLD, (short) (14 + getWidth() * .01));
         lblLogin.setFont(fontTitle);
         Font fontLbl = new Font("Roboto", Font.BOLD, (short) (10 + getWidth() * .01));
+        lblGestor.setFont(fontLbl);
         lblServidor.setFont(fontLbl);
         lblBasedeDatos.setFont(fontLbl);
         lblUsuario.setFont(fontLbl);
@@ -137,6 +138,7 @@ public class VistaConexion extends JPanel implements ComponentListener {
         btnConectar.setFont(fontLbl);
 
         Font fontTxt = new Font("Roboto", Font.PLAIN, (short) (10 + getWidth() * .01));
+        txtGestor.setFont(fontTxt);
         txtServidor.setFont(fontTxt);
         txtBasedeDatos.setFont(fontTxt);
         txtUsuario.setFont(fontTxt);

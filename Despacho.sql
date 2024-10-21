@@ -13,18 +13,18 @@ create table clientes
 go
 alter table clientes add constraint pk_idCliente primary key(idCliente);
 go
---mysql
-insert into clientes
-values
-    (4, 'Pablo', 'Baja California', 50, 10),
-    (5, 'Lissandra', 'Baja California', 50, 100),
-    (6, 'Leblanc', 'Baja California', 30, 93)
 --sql server
 insert into clientes
 values
     (1, 'Pedro', 'Jalisco', 50, 10),
     (2, 'Luis', 'Jalisco', 50, 100),
     (3, 'Jose', 'Jalisco', 30, 93)
+--mysql
+insert into clientes
+values
+    (4, 'Pablo', 'Baja California', 50, 10),
+    (5, 'Lissandra', 'Baja California', 50, 100),
+    (6, 'Leblanc', 'Baja California', 30, 93)
 --postgresql
 insert into clientes
 values

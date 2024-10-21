@@ -59,7 +59,7 @@ public class ControladorVerConexiones implements ActionListener {
         }
 
         if (e.getSource() == vistaVerConexiones.getBtnGuardarFragmento()) {
-            if (modeloVerConexiones.safeFragment(vistaVerConexiones.getFragmentos()))
+            if (modeloVerConexiones.addFragment(vistaVerConexiones.getFragmentos()))
                 vistaVerConexiones.showNotification("Fragmento guardado correctamente", Notifications.Type.SUCCESS);
             else
                 vistaVerConexiones.showNotification("No se pudo guardar el fragmento", Notifications.Type.ERROR);

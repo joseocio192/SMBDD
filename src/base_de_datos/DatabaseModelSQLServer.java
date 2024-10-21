@@ -15,14 +15,16 @@ public class DatabaseModelSQLServer extends DatabaseModel {
 
     @Override
     public Connection getConexion() {
-        
+
         String url = "jdbc:sqlserver://" + servidor + ";database=" + basededatos + ";user=" + usuario + ";password="
                 + password + ";trustServerCertificate=true;loginTimeout=5;";
         try {
             conexion = DriverManager.getConnection(url);
-            if (conexion != null) {
-                System.out.println("Conexión a SQL Server exitosa");
-            }
+            // if (conexion != null) {
+            // ErrorHandler.showMessage("Conectado a la base de datos SQL Server", "Conexión
+            // exitosa",
+            // JOptionPane.INFORMATION_MESSAGE);
+            // }
         } catch (SQLException e) {
             ErrorHandler.showMessage("Error en la conexión a SQL Server: " + e.getMessage(), "Error de conexión",
                     JOptionPane.ERROR_MESSAGE);
